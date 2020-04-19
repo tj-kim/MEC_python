@@ -36,6 +36,9 @@ class Server:
             weak_range - level 1 resources, num_resource x 2 matrix
             strong_range - level 2 resources, num_resource x 2 matrix
             timesteps - number of timesteps in the system
+            
+        Attribute: 
+            avail_rsrc - available resources per timestep for this server
         """
         
         max_range = 1e9 # Placeholder for infinite resource
