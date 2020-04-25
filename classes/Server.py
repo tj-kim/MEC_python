@@ -69,9 +69,9 @@ class Server:
         x_min, x_max = boundaries[0,0], boundaries[0,1]
         y_min, y_max = boundaries[1,0], boundaries[1,1]
         
-        locs = np.zeros((2,1))
+        locs = np.zeros(2)
         
-        locs[0,0] = np.random.uniform(low = x_min, high = x_max, size = None)
-        locs[1,0] = np.random.uniform(low = y_min, high = y_max, size = None)
+        locs[0] = np.random.uniform(low = x_min, high = x_max, size = None)
+        locs[1] = np.random.uniform(low = y_min, high = y_max, size = None)
         
         return locs
