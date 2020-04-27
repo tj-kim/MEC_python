@@ -27,7 +27,7 @@ class Server:
         self.level = level
         
         
-    def server_resources(self, num_resource, weak_range, strong_range, timesteps):
+    def server_resources(self, num_resource, weak_range, strong_range):
         """
         generate matrix to define resource capacity for each timestep
         
@@ -38,11 +38,11 @@ class Server:
             timesteps - number of timesteps in the system
             
         Attribute: 
-            avail_rsrc - available resources per timestep for this server
+            avail_rsrc - available resources at server (single timestep)
         """
         
         max_range = 1e9 # Placeholder for infinite resource
-        avail = np.ones((num_resource,timesteps))
+        avail = np.ones(num_resource)
         
         # define resource capacity for each server based on level
         if self.level == 1:
@@ -56,7 +56,7 @@ class Server:
         # Draw each resource type from random distribution
         for i in range(num_resource):
             resource_draw = np.random.uniform(low = lvl_range[i,0], high = lvl_range[i,1], size = None)
-            avail[i,:] = avail[i,:] * resource_draw
+            avail[i] = avail[i] * resource_draw
         
         self.avail_rsrc = avail
         return
