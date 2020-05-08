@@ -10,7 +10,7 @@ class Link:
         - How many resources have been reserved at each timestep
     """
     
-    def __init__(self, servers, num_link, prob_link, lv_minmax):
+    def __init__(self, servers, num_link, prob_link, lv_minmax, lv1_transmission = 1):
         """
         Inputs:
         servers  - servers class holding server location information
@@ -22,8 +22,11 @@ class Link:
         valid_links = binary indication of which links exist in the system
         num_path = number of path available between any two servers
         lit_links = path indexed for 2 servers based on num_path
-        
+        lv1_transmission - how many times lv1 paths can be traversed
         """
+        
+        # What level 2 server is closest to each level 1 server
+        self.s1_s2_assoc = None
         
         # Obtain distances between each server
         self.distances = self.calc_distance(servers)
@@ -36,6 +39,9 @@ class Link:
         
         # invoke function for indicating which links are lit for each unique path
         self.path_graph = Graph(self.valid_links)
+        
+        # Reduce the number of valid paths to follow link protocol
+        self.trim_paths(servers, lv1_transmission)
         
         # Count number of paths between two servers
         self.num_path = self.count_paths()
@@ -86,6 +92,9 @@ class Link:
         lvl2_idx = np.where(svr_lvls==2)[0]
         lvl1_idx = np.where(svr_lvls==1)[0]
         
+        # Associate each level 1 server to closest lvl 2 server
+        lv1_lv2_assoc = {}
+        
         for i in lvl1_idx:
             # From level 1 to level 2 servers
             dists = self.get_distance(s1_idx=i,s2_idx=None)
@@ -94,7 +103,11 @@ class Link:
             dists_lv2 = dists * mask
             min_idx = np.where(dists_lv2==np.min(dists_lv2[np.nonzero(dists_lv2)]))[0][0]
             valid_links[i,min_idx], valid_links[min_idx,i] = 1,1
-            
+            lv1_lv2_assoc[i] = min_idx
+        
+        self.s1_s2_assoc = lv1_lv2_assoc
+        
+        for i in lvl1_idx:
             # From level 1 to level 1 servers
             mask = np.zeros(len(servers))
             mask[lvl1_idx] = 1
@@ -115,8 +128,13 @@ class Link:
                 
                 # Draw link for minimum and remove lv1 server from contention
                 min_idx = np.where(dists_lvl1==np.min(dists_lvl1[np.nonzero(dists_lvl1)]))[0][0]
-                valid_links[i,min_idx], valid_links[min_idx,i] = 1,1
+                
+                # Only link level 1 servers if they are connected to same level 2 servers
+                if lv1_lv2_assoc[i] == lv1_lv2_assoc[min_idx]:
+                    valid_links[i,min_idx], valid_links[min_idx,i] = 1,1
+                
                 dists_lvl1[min_idx] = 0
+                
         
         # set identity to zero
         np.fill_diagonal(valid_links, 0)
@@ -171,10 +189,46 @@ class Link:
                 path_counts[s1,s2] = len(self.path_graph.path_dict[(s1,s2)])
                 
         return path_counts
-                
+    
+    def trim_paths(self, servers, lv1_transmission):
+        """
+        Trim the number of paths the links can forward traffic from any 2 servers
+        Protocol - Traffic from level 2 can only go to level 1 if its to destination
+        """
+        
+        for s1 in range(len(servers)): 
+            for s2 in range(len(servers)):
+                if s1 != s2:
+                    path_list = self.path_graph.path_dict[(s1,s2)]
+                    new_path_list = []
+                    for path in path_list:
+                        curr_level = 1
+                        break_flag = 0
+                        lv1_counter = 0
+                        for s in path:
+                            if servers[s].level > curr_level: 
+                                curr_level = servers[s].level
+                            # Get rid of paths with too many connections between level 1 servers
+                            elif servers[s].level == curr_level and curr_level == 1 and s != s1:
+                                lv1_counter += 1
+                                if lv1_counter == lv1_transmission + 1:
+                                    break_flag = 1
+                                    break
+                            # Get rid of paths with back and forth between lv1 and lv2 servers
+                            elif servers[s].level < curr_level and servers[s].level == 1 and s != s2:
+                                break_flag = 1
+                                break
+                        
+                        if break_flag != 1:
+                            new_path_list += [path]
+                    
+                    self.path_graph.path_dict[(s1,s2)] = new_path_list
+    
+        
+    
     
     """
-    Utility Functions
+    Utility Functions (Callable)
     """
     
     def get_distance(self,s1_idx,s2_idx=None):
