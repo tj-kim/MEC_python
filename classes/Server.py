@@ -17,15 +17,20 @@ class Server:
         locs - custom locations for servers (good for strong servers)
         """
         
+        # Attributes
+        self.level = level
+        self.avail_rsrc = None
+        self.svr_id = None
+        
         # Generate/assign server locs
         if rand_locs is True:
             self.locs = self.generate_locs(boundaries)
         else:
             self.locs = locs
         
-        # Assign server level
-        self.level = level
-        
+    """
+    Misc. Callable Functions
+    """
         
     def server_resources(self, num_resource, weak_range, strong_range):
         """
@@ -59,7 +64,16 @@ class Server:
             avail[i] = avail[i] * resource_draw
         
         self.avail_rsrc = avail
-        return
+        
+    def assign_id(self, id_no):
+        """
+        Assign ID to server. Make sure it doesn't overlap with other servers
+        """
+        self.svr_id = id_no
+    
+    """
+    Init helper functions (non-callable)
+    """
     
     def generate_locs(self, boundaries):
         """

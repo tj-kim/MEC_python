@@ -8,7 +8,84 @@ class User:
         - User type (vehicle, pedestrian, public transport)
         - Markov chain
         - conditioning function
+    """import numpy as np
+
+class Server:
     """
+    Server: generates one server in space/time with following characteristics
+        - Existence of link
+        - Number of paths between two servers
+        - Resource constraint of each link
+        - How many resources have been reserved at each timestep
+    """
+    
+    def __init__(self, boundaries, level, rand_locs = True, locs = None):
+        """
+        boundaries - x,y coordinates showing limit for where 
+        level - hierarchy level of server (cloud = 3, strong = 2, weak = 1)
+        rand_locs - generate server using locations drawn from uniform locations
+        locs - custom locations for servers (good for strong servers)
+        """
+        
+        # Generate/assign server locs
+        if rand_locs is True:
+            self.locs = self.generate_locs(boundaries)
+        else:
+            self.locs = locs
+        
+        # Assign server level
+        self.level = level
+        
+        
+    def server_resources(self, num_resource, weak_range, strong_range):
+        """
+        generate matrix to define resource capacity for each timestep
+        
+        Input:
+            num_resource - number of resources at a server (storage, ram, cpu)
+            weak_range - level 1 resources, num_resource x 2 matrix
+            strong_range - level 2 resources, num_resource x 2 matrix
+            timesteps - number of timesteps in the system
+            
+        Attribute: 
+            avail_rsrc - available resources at server (single timestep)
+        """
+        
+        max_range = 1e9 # Placeholder for infinite resource
+        avail = np.ones(num_resource)
+        
+        # define resource capacity for each server based on level
+        if self.level == 1:
+            lvl_range = weak_range
+        elif self.level == 2:
+            lvl_range = strong_range
+        else: # If server level is cloud=3
+            self.avail_rsrc = avail * max_range
+            return
+        
+        # Draw each resource type from random distribution
+        for i in range(num_resource):
+            resource_draw = np.random.uniform(low = lvl_range[i,0], high = lvl_range[i,1], size = None)
+            avail[i] = avail[i] * resource_draw
+        
+        self.avail_rsrc = avail
+        return
+    
+    def generate_locs(self, boundaries):
+        """
+        Use uniform distribution to set server location 
+        """
+        
+        x_min, x_max = boundaries[0,0], boundaries[0,1]
+        y_min, y_max = boundaries[1,0], boundaries[1,1]
+        
+        locs = np.zeros(2)
+        
+        locs[0] = np.random.uniform(low = x_min, high = x_max, size = None)
+        locs[1] = np.random.uniform(low = y_min, high = y_max, size = None)
+        
+        return locs
+
     
     def __init__(self, boundaries, time_steps, mvmt_class, lambdas, max_speed, num_path = 1):
         """
@@ -26,6 +103,7 @@ class User:
         self.max_speed = max_speed
         self.lmda = lambdas[mvmt_class]
         self.num_servers = None
+        self.user_id = None
         
         # Make user initial location
         init_loc = self.generate_locs(boundaries)
@@ -45,72 +123,6 @@ class User:
         self.MC_trans_matrix = None
         self.server_prob = None
         
-    """
-    Init helper Functions (Not Callable)
-    """
-    
-    def generate_locs(self, boundaries):
-        """
-        Use uniform distribution to set server location 
-        """
-        
-        x_min, x_max = boundaries[0,0], boundaries[0,1]
-        y_min, y_max = boundaries[1,0], boundaries[1,1]
-        
-        locs = np.zeros(2)
-        
-        locs[0] = np.random.uniform(low = x_min, high = x_max, size = None)
-        locs[1] = np.random.uniform(low = y_min, high = y_max, size = None)
-        
-        return locs
-
-    def generate_all_paths(self, boundaries, init_loc, numpath, lmda, time_steps, max_speed):
-        """
-        Generate Random Movements for users starting at initial location
-        """
-        
-        # Generate Random travel magnitude and direction from exponential distribution
-        mags = np.random.exponential(1/lmda,size = (numpath, time_steps-1))
-        mags[mags > max_speed] = max_speed
-        angles = np.random.uniform(low = 0, high = 2 * math.pi, size = (numpath, time_steps-1))
-        
-        # Convert mag/angles to x,y displacements
-        x_delta = np.expand_dims(np.multiply(mags, np.cos(angles)),axis=1)
-        y_delta = np.expand_dims(np.multiply(mags, np.sin(angles)),axis=1)
-        deltas = np.append(x_delta,y_delta,axis=1)
-        
-        # Add deltas to initial location while staying inside boundary
-        locs = np.ones((num_path,2,time_steps)) * np.reshape(init_loc,(1,2,1))
-        for t in np.arange(1,time_steps): # Offset first timestep (initloc)
-            curr_locs = locs[:,:,t-1] + deltas[:,:,t-1]
-            # Check if any of the boundaries are exceeded
-            curr_locs = self.boundary_fix(curr_locs, boundaries)
-            locs[:,:,t] = curr_locs
-        
-        return locs
-    
-    def boundary_fix(self, curr_locs,boundaries):
-        """
-        Shoves users to space boundary if they venture outside simulation space
-        """
-        
-        x_min, x_max = boundaries[0,0], boundaries[0,1]
-        y_min, y_max = boundaries[1,0], boundaries[1,1]
-        
-        x_vals = curr_locs[:,0]
-        y_vals = curr_locs[:,1]
-        
-        x_vals[x_vals < x_min] = x_min
-        x_vals[x_vals > x_max] = x_max
-        y_vals[y_vals < y_min] = y_min
-        y_vals[y_vals > y_max] = y_max
-        
-        output = np.append(np.expand_dims(x_vals,axis=1),
-                           np.expand_dims(y_vals,axis=1),
-                           axis=1)
-        return output
-    
-
     """
     Markov Chain Functions (Callable)
     """
@@ -178,7 +190,81 @@ class User:
         
         self.server_prob = server_prob
             
+    """
+    Misc. Callable Functions
+    """
+    def assign_id(self, id_no):
+        """
+        Assigns ID to user. 2 Users should not have the same IDs
+        """
         
+        self.user_id = id_no
+        
+        
+    """
+    Init helper Functions (Not Callable)
+    """
+    
+    def generate_locs(self, boundaries):
+        """
+        Use uniform distribution to set server location 
+        """
+        
+        x_min, x_max = boundaries[0,0], boundaries[0,1]
+        y_min, y_max = boundaries[1,0], boundaries[1,1]
+        
+        locs = np.zeros(2)
+        
+        locs[0] = np.random.uniform(low = x_min, high = x_max, size = None)
+        locs[1] = np.random.uniform(low = y_min, high = y_max, size = None)
+        
+        return locs
+
+    def generate_all_paths(self, boundaries, init_loc, numpath, lmda, time_steps, max_speed):
+        """
+        Generate Random Movements for users starting at initial location
+        """
+        
+        # Generate Random travel magnitude and direction from exponential distribution
+        mags = np.random.exponential(1/lmda,size = (numpath, time_steps-1))
+        mags[mags > max_speed] = max_speed
+        angles = np.random.uniform(low = 0, high = 2 * math.pi, size = (numpath, time_steps-1))
+        
+        # Convert mag/angles to x,y displacements
+        x_delta = np.expand_dims(np.multiply(mags, np.cos(angles)),axis=1)
+        y_delta = np.expand_dims(np.multiply(mags, np.sin(angles)),axis=1)
+        deltas = np.append(x_delta,y_delta,axis=1)
+        
+        # Add deltas to initial location while staying inside boundary
+        locs = np.ones((num_path,2,time_steps)) * np.reshape(init_loc,(1,2,1))
+        for t in np.arange(1,time_steps): # Offset first timestep (initloc)
+            curr_locs = locs[:,:,t-1] + deltas[:,:,t-1]
+            # Check if any of the boundaries are exceeded
+            curr_locs = self.boundary_fix(curr_locs, boundaries)
+            locs[:,:,t] = curr_locs
+        
+        return locs
+    
+    def boundary_fix(self, curr_locs,boundaries):
+        """
+        Shoves users to space boundary if they venture outside simulation space
+        """
+        
+        x_min, x_max = boundaries[0,0], boundaries[0,1]
+        y_min, y_max = boundaries[1,0], boundaries[1,1]
+        
+        x_vals = curr_locs[:,0]
+        y_vals = curr_locs[:,1]
+        
+        x_vals[x_vals < x_min] = x_min
+        x_vals[x_vals > x_max] = x_max
+        y_vals[y_vals < y_min] = y_min
+        y_vals[y_vals > y_max] = y_max
+        
+        output = np.append(np.expand_dims(x_vals,axis=1),
+                           np.expand_dims(y_vals,axis=1),
+                           axis=1)
+        return output
         
     """
     Utility Functions for Markov CHain
@@ -280,4 +366,4 @@ class User:
         self.dict_st2node = new_dict_st2node
         self.dict_node2st = new_dict_node2st
         self.MC_trans_matrix = trans_matrix
-    
+        
