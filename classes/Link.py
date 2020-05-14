@@ -1,6 +1,6 @@
 import numpy as np
 import itertools
-from Graph import Graph
+from Graph import Graph 
 
 class Link:
     """
