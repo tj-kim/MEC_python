@@ -19,6 +19,7 @@ class Server:
         
         # Attributes
         self.level = level
+        self.num_rsrc = None
         self.avail_rsrc = None
         self.svr_id = None
         
@@ -63,6 +64,7 @@ class Server:
             resource_draw = np.random.uniform(low = lvl_range[i,0], high = lvl_range[i,1], size = None)
             avail[i] = avail[i] * resource_draw
         
+        self.num_rsrc = num_resource
         self.avail_rsrc = avail
         
     def assign_id(self, id_no):

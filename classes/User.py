@@ -8,84 +8,7 @@ class User:
         - User type (vehicle, pedestrian, public transport)
         - Markov chain
         - conditioning function
-    """import numpy as np
-
-class Server:
     """
-    Server: generates one server in space/time with following characteristics
-        - Existence of link
-        - Number of paths between two servers
-        - Resource constraint of each link
-        - How many resources have been reserved at each timestep
-    """
-    
-    def __init__(self, boundaries, level, rand_locs = True, locs = None):
-        """
-        boundaries - x,y coordinates showing limit for where 
-        level - hierarchy level of server (cloud = 3, strong = 2, weak = 1)
-        rand_locs - generate server using locations drawn from uniform locations
-        locs - custom locations for servers (good for strong servers)
-        """
-        
-        # Generate/assign server locs
-        if rand_locs is True:
-            self.locs = self.generate_locs(boundaries)
-        else:
-            self.locs = locs
-        
-        # Assign server level
-        self.level = level
-        
-        
-    def server_resources(self, num_resource, weak_range, strong_range):
-        """
-        generate matrix to define resource capacity for each timestep
-        
-        Input:
-            num_resource - number of resources at a server (storage, ram, cpu)
-            weak_range - level 1 resources, num_resource x 2 matrix
-            strong_range - level 2 resources, num_resource x 2 matrix
-            timesteps - number of timesteps in the system
-            
-        Attribute: 
-            avail_rsrc - available resources at server (single timestep)
-        """
-        
-        max_range = 1e9 # Placeholder for infinite resource
-        avail = np.ones(num_resource)
-        
-        # define resource capacity for each server based on level
-        if self.level == 1:
-            lvl_range = weak_range
-        elif self.level == 2:
-            lvl_range = strong_range
-        else: # If server level is cloud=3
-            self.avail_rsrc = avail * max_range
-            return
-        
-        # Draw each resource type from random distribution
-        for i in range(num_resource):
-            resource_draw = np.random.uniform(low = lvl_range[i,0], high = lvl_range[i,1], size = None)
-            avail[i] = avail[i] * resource_draw
-        
-        self.avail_rsrc = avail
-        return
-    
-    def generate_locs(self, boundaries):
-        """
-        Use uniform distribution to set server location 
-        """
-        
-        x_min, x_max = boundaries[0,0], boundaries[0,1]
-        y_min, y_max = boundaries[1,0], boundaries[1,1]
-        
-        locs = np.zeros(2)
-        
-        locs[0] = np.random.uniform(low = x_min, high = x_max, size = None)
-        locs[1] = np.random.uniform(low = y_min, high = y_max, size = None)
-        
-        return locs
-
     
     def __init__(self, boundaries, time_steps, mvmt_class, lambdas, max_speed, num_path = 1):
         """
@@ -139,6 +62,7 @@ class Server:
         
         # Obtain transition probabilities based on user voronoi on paths
         self.MC_trans_matrix = self.generate_transition_matrix()
+        self.update_voronoi_probs()
 
         
     def update_voronoi_probs(self, time_passed=0, self_rate = 0.05, raise_times = 1e7):
@@ -236,7 +160,7 @@ class Server:
         deltas = np.append(x_delta,y_delta,axis=1)
         
         # Add deltas to initial location while staying inside boundary
-        locs = np.ones((num_path,2,time_steps)) * np.reshape(init_loc,(1,2,1))
+        locs = np.ones((self.num_path,2,time_steps)) * np.reshape(init_loc,(1,2,1))
         for t in np.arange(1,time_steps): # Offset first timestep (initloc)
             curr_locs = locs[:,:,t-1] + deltas[:,:,t-1]
             # Check if any of the boundaries are exceeded
@@ -305,7 +229,7 @@ class Server:
         
         node_count = 0
         for t in range(self.time_steps):
-            for s in range(len(servers)):
+            for s in range(self.num_servers):
                 if s in self.user_voronoi[:,t]:
                     self.dict_st2node[(s,t)] = node_count
                     self.dict_node2st[node_count] = (s,t)
@@ -317,7 +241,7 @@ class Server:
             source_servers = np.unique(self.user_voronoi[:,t])
             for s in source_servers:
                 s_idx = np.where(self.user_voronoi[:,t]==s)[0]
-                dests = np.zeros(len(servers))
+                dests = np.zeros(self.num_servers)
                 for k in s_idx:
                     temp_dest = self.user_voronoi[k,t+1]
                     dests[int(temp_dest)] += 1/s_idx.shape[0]
@@ -346,7 +270,7 @@ class Server:
         
         # Make new dictionary for new transition matrix
         for t in range(time_passed+1, self.time_steps):
-            for s in range(len(servers)):
+            for s in range(self.num_servers):
                 if s in self.user_voronoi[:,t]:
                     new_dict_st2node[(s,t)] = node_count
                     new_dict_node2st[node_count] = (s,t)
