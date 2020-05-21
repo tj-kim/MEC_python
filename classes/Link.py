@@ -243,3 +243,39 @@ class Link:
         else:
             return self.distances[s1_idx][s2_idx]
     
+
+    
+    def get_subpath(self,s1,s2,n):
+        """
+        Returns a SxS matrix with "lit" links for traversing a certain path between 
+        servers s1 and s2 when path no. n is taken.
+        """
+        
+        sub_path = np.zeros(self.valid_links.shape)
+        
+        # Obtain server traverse of path
+        path = self.path_graph.path_dict[(s1,s2)][n]
+        
+        # Loop through and turn the path into binary indication
+        for i in range(len(path)-1):
+            sub_path[path[i],path[i+1]] = 1
+        
+        return sub_path
+        
+    
+    def get_avgpath(self,s1,s2):
+        """
+        Returns SxS matrix with links taken on average across all the possible paths
+        between servers s1 and s2.
+        """
+        
+        avg_path = np.zeros(self.valid_links.shape)
+        
+        # obtain all paths
+        paths = self.path_graph.path_dict[(s1,s2)]
+        
+        for path in paths:
+            for i in range(len(path)-1):
+                avg_path[path[i],path[i+1]] += 1/len(paths)
+        
+        return avg_path
