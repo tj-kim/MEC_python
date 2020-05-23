@@ -11,7 +11,7 @@ class Link:
         - How many resources have been reserved at each timestep
     """
     
-    def __init__(self, servers, num_link, prob_link, lv_minmax, lv1_transmission = 1):
+    def __init__(self, servers, num_link, prob_link, lv_minmax, link_cost, lv1_transmission = 1):
         """
         Inputs:
         servers  - servers class holding server location information
@@ -46,6 +46,9 @@ class Link:
         
         # Count number of paths between two servers
         self.num_path = self.count_paths()
+        
+        # Set cost of each link used
+        self.cost_links = self.link_resource_cost(link_cost, servers)
         
     
     """
@@ -227,6 +230,36 @@ class Link:
     
         
     
+    def link_resource_cost(self, link_cost, servers):
+        """
+        Set resource cost per timestep for every link bidirectionally.
+        
+        Input: link_cost - 3x1 array for cost of link based on greater server per ts
+               servers   - List of servers (S) to keep track of levels.
+        """
+        
+        # Empty cost vector to fill
+        cost_links = np.zeros((len(servers),len(servers)))
+        
+        # Obtain server level for each index
+        svr_lvls = np.zeros(len(servers))
+        for i in range(len(servers)):
+            svr_lvls[i] = servers[i].level
+        
+        # Set up all server combinations
+        server_idx_list = []
+        for s1 in range(len(servers)):
+            for s2 in range(len(servers)):
+                if s1 != s2:
+                    server_idx_list += [(s1,s2)]
+        
+        # Set link cost based on higher level server
+        for (s1,s2) in server_idx_list:
+            level = max(servers[s1].level,servers[s2].level)-1
+            cost_links[s1,s2] = link_cost[level]
+        
+        return cost_links
+        
     
     """
     Utility Functions (Callable)

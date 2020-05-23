@@ -22,6 +22,7 @@ class Server:
         self.num_rsrc = None
         self.avail_rsrc = None
         self.svr_id = None
+        self.svr_rsrc_cost = None
         
         # Generate/assign server locs
         if rand_locs is True:
@@ -66,6 +67,19 @@ class Server:
         
         self.num_rsrc = num_resource
         self.avail_rsrc = avail
+        
+    def server_resources_cost(self,num_resource,cost_per_resource):
+        """
+        generate cost per placement resource at this specific server
+        
+        Input: num_resource (integer), number of types of resources
+               cost_per_resource (num_resource x 1) vector with monetary 
+                   cost per unit resource per TS
+        """
+        
+        assert cost_per_resource.shape[0] == num_resource
+        
+        self.svr_rsrc_cost = cost_per_resource
         
     def assign_id(self, id_no):
         """
