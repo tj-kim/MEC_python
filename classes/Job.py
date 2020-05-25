@@ -29,6 +29,9 @@ class Job:
         # Draw Migration BW Resources
         self.migration_rsrc = self.draw_migration_rsrc()
         
+        # Draw latency penalty
+        self.latency_penalty = self.draw_latency_penalty()
+        
     def draw_UE_req(self):
         """
         Tap into job profile and obtain user experience thresholds
@@ -79,7 +82,15 @@ class Job:
         return np.random.uniform(self.job_profile.migration_amt_range[0],
                                  self.job_profile.migration_amt_range[1])
     
-
+    def draw_latency_penalty(self):
+        """
+        Draw the monetary penalty induced by user per milisecond lag 
+        beyond threshold
+        """
+        
+        return np.random.uniform(self.job_profile.latency_penalty_range[0],
+                                 self.job_profile.latency_penalty_range[1])
+    
 class Job_Profile:
     """
     Make list of job profiles with
@@ -93,7 +104,8 @@ class Job_Profile:
                     thruput_req_range,
                     length_range,
                     placement_rsrc_range,
-                    migration_amt_range):
+                    migration_amt_range,
+                    latency_penalty_range):
         """
         Add job profile to list 
         """
@@ -104,3 +116,4 @@ class Job_Profile:
         self.length_range = length_range # In units of 5 minuts
         self.placement_rsrc_range = placement_rsrc_range
         self.migration_amt_range = migration_amt_range
+        self.latency_penalty_range = latency_penalty_range

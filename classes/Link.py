@@ -11,13 +11,14 @@ class Link:
         - How many resources have been reserved at each timestep
     """
     
-    def __init__(self, servers, num_link, prob_link, lv_minmax, link_cost, lv1_transmission = 1):
+    def __init__(self, servers, num_link, prob_link, lv_minmax, link_cost, latency_settings, lv1_transmission = 1):
         """
         Inputs:
         servers  - servers class holding server location information
         num_link - number of links each weak server should have with others
         prob_link - pdf of each possible count in num_link
         lv_minmax - uniform distribution range for link capacity (mbps) based on server level
+        latency_settings - len 2 list with [switch latency (ms), distance latency (ms)]
         
         Attributes:
         valid_links = binary indication of which links exist in the system
@@ -49,6 +50,10 @@ class Link:
         
         # Set cost of each link used
         self.cost_links = self.link_resource_cost(link_cost, servers)
+        
+        # Switch delay and optic fiber transfer speed 
+        self.switch_delay = latency_settings[0] #ms
+        self.dist_delay = latency_settings[1] # ms
         
     
     """
