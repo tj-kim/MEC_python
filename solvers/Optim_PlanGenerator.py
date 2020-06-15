@@ -1,6 +1,6 @@
 from pulp import *
 from PlanGenerator import *
-import numpy as np
+import time
 
 class Optim_PlanGenerator(PlanGenerator):
     """
@@ -17,6 +17,9 @@ class Optim_PlanGenerator(PlanGenerator):
         self.q_vars = None
         self.g_vars = None
         self.h_vars = None
+        
+        # Measure Run time
+        self.run_time = None
         
         # Declare Optimization Problem
         self.prob = LpProblem("Migration Plan Problem",LpMinimize)
@@ -428,7 +431,19 @@ class Optim_PlanGenerator(PlanGenerator):
         - measure the total time it takes to solve the problem
         """
         
-    def cost_breakdown(self):
+        # Measure Time of running
+        start_time = time.time()
+        self.prob.solve()
+        self.run_time = time.time() - start_time
+        
+        # Print Status
+        print("Status:", constants.LpStatus[optim_prob.prob.status])
+        print("Run Time:", self.run_time, "s")
+        
+        
+    def extract_plan(self):
         """
-        Break down the total cost into sub components and timesteps and place in array
+        Alter the decision variable "h" into a migration plan
         """
+        
+        
