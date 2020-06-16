@@ -59,8 +59,14 @@ class Migration_Plans:
         """
         
         # 1. Loop through all h_vars and obtain those that have been selected
+        h_hit_keys = []
+        h_hit_vals = []
+        
+        for h_key in ILP_prob.h
+            
         
         # 2. Loop through each of the users and isolate variables that pertain to them
+        for j in range(len(ILP_prob.jobs)):
         
         # 3. For each user reorder the variables in terms of start-end time (they should connect)
         
