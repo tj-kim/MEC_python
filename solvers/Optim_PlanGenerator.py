@@ -47,6 +47,16 @@ class Optim_PlanGenerator(PlanGenerator):
 
         # Loop through all possible combinations of h variables outside of start and end node
         for j in range(len(self.jobs)):
+            
+            # Add start node
+            first_time_active = (self.jobs[j].active_time[0] == 1)
+            if first_time_active:
+                for s1 in range(len(self.servers)):
+                    idxs += [(j, -1, s1, start_node_time, 0, 0)]
+            else:
+                idxs += [(j, -1, -1, start_node_time, 0, 0)]
+                
+            # All other nodes
             for t1 in range(self.sim_params.time_steps):
                 # Limit how far edge can go
                 end_steps = min(t1+1+self.sim_params.max_edge_length, self.sim_params.time_steps)
@@ -80,13 +90,7 @@ class Optim_PlanGenerator(PlanGenerator):
                         for s1 in range(len(self.servers)):
                             idxs += [(j, s1, -1, t1, t2, 0)]
                             
-            # Add start node
-            first_time_active = (self.jobs[j].active_time[0] == 1)
-            if first_time_active:
-                for s1 in range(len(self.servers)):
-                    idxs += [(j, -1, s1, start_node_time, 0, 0)]
-            else:
-                idxs += [(j, -1, -1, start_node_time, 0, 0)]
+            
                 
             # Add end node
             end_time_active = (self.jobs[j].active_time[end_node_time-1] == 1)
@@ -392,7 +396,7 @@ class Optim_PlanGenerator(PlanGenerator):
         for (u,t,s1,s2,s3,s4) in service_bw_cost_list:
             if (u,s2,t) in self.q_vars.keys():
                 usr_job_flag = self.users[u].server_prob[s1,t] * self.q_vars[(u,s2,t)]
-                expected_link = self.links.cost_links[s3,s4] * self.links.get_avgpath(s1,s2)[s3,s4]
+                expected_link = self.links.cost_links[s3,s4] * self.links.get_avgpath(s2,s1)[s3,s4]
                 serv_bw_cost += self.jobs[u].thruput_req * usr_job_flag * expected_link
         
         # 4. Latency Cost

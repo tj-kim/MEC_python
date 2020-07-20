@@ -94,9 +94,26 @@ class Migration_Plans:
         
         return
     
+    def from_seq_greedy(self,SG_prob):
+        """
+        From the migration plan problem, do the entire procedure of reserving resources and 
+        generating final migration plan -- how will we do this for batch?
+        """
+        
+        # Should add convert node informations
+        self.convert_node2st = SG_prob.convert_node2st
+        self.convert_st2node = SG_prob.convert_st2node
+        self.valid_links = SG_prob.valid_links
+        self.num_edges = SG_prob.num_edges
+        self.all_costs = SG_prob.all_costs
+        self.edge_weights_min = SG_prob.edge_weights_min
+        self.edge_weights_path_idx = SG_prob.edge_weights_path_idx
+    
     """
     Extraction function helpers
     """
+    
+    # ILP
     
     def ILP_plan_extract(self, uh_keys_ordered, job_num):
         """
@@ -133,7 +150,53 @@ class Migration_Plans:
                 self.mig_plan_dict[job_num]["source_server"][start_time:end_time] = source_server
                 self.mig_plan_dict[job_num]["dest_server"][start_time:end_time] = source_server
     
+    # HEuristic
     
+    def seq_greedy_plan_extract(self, node_orders, link_path_orders, job_num):
+        """
+        Loop through the ordered selected nodes for a single user 
+        And generate np arrays that will correspond to plans
+        Inputs:
+            node_orders: Sequence of nodes in mig graph that make up a plan
+            link_path_orders : which path was taken between two nodes in mig graph
+            job_num: job id 
+        """
+        
+        active = True
+        inactive = False
+        
+        # Pull pairs of nodes that are connected together
+        pair_list = []
+        path_idx = 0
+        for i in range(len(node_orders)-1):
+            pair_list += [(node_orders[i],node_orders[i+1])]
+        
+        # Loop through each of the keys (Use switch cases below)
+        for (node1,node2) in pair_list:
+            (source_server, start_time) = self.convert_node2st[job_num][node1]
+            (dest_server, end_time) = self.convert_node2st[job_num][node2]
+            link_path = link_path_orders[path_idx]
+            path_idx += 1
+            
+            case = (source_server >= 0, dest_server >= 0) # server source, dest active/inactive
+            
+            if case == (active, active) or case == (inactive,inactive):
+                self.mig_plan_dict[job_num]["source_server"][start_time:end_time] = source_server
+                self.mig_plan_dict[job_num]["dest_server"][start_time:end_time] = dest_server
+                
+                # Migration length find
+                if source_server != dest_server:
+                    mig_length = end_time - start_time
+                    self.mig_plan_dict[job_num]["mig_rate"][start_time:end_time] = 1/mig_length
+                    self.mig_plan_dict[job_num]["mig_link_id"][start_time:end_time] = link_path
+                    
+            elif case == (inactive, active) or case == (active, inactive):
+                # The entire column in the plan is considered inactive/active
+                self.mig_plan_dict[job_num]["source_server"][start_time:end_time] = source_server
+                self.mig_plan_dict[job_num]["dest_server"][start_time:end_time] = source_server
+    
+    # General
+        
     def reserve_service_bw(self,links,jobs):
         """
         take into a consideration the resources at each link at each timestep, and determine
