@@ -1,0 +1,11 @@
+source svr - user1,dest svr - user1,proportion migration,Mbps - user1,mig path - user1,source svr - user2,dest svr - user2,proportion migration,Mbps - user2,mig path - user2,source svr - user3,dest svr - user3,proportion migration,Mbps - user3,mig path - user3,source svr - user4,dest svr - user4,proportion migration,Mbps - user4,mig path - user4,source svr - user5,dest svr - user5,proportion migration,Mbps - user5,mig path - user5,source svr - user6,dest svr - user6,proportion migration,Mbps - user6,mig path - user6
+2,2,0,0.0,0,1,1,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,1,1,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,1,1,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,1,1,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,1,4,1,5.6337971314940525,"(1, 4)",4,4,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,4,4,0,0.0,0,4,3,1,0.8673525078604094,"(4, 3)",3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0
+2,2,0,0.0,0,4,4,0,0.0,0,3,3,0,0.0,0,3,3,0,0.0,0,4,4,0,0.0,0,4,4,0,0.0,0

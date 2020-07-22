@@ -299,6 +299,23 @@ class Link:
             sub_path[path[i],path[i+1]] = 1
         
         return sub_path
+    
+    def get_subpath_sequential(self,s1,s2,n):
+        """
+        Returns a tuple of servers that takes SxS in get_subpath
+        This is the sequence of servers
+        """
+        
+        lit_links = self.get_subpath(s1,s2,n)
+        
+        curr_server = s1
+        all_servers = [curr_server]
+        while curr_server != s2:
+            all_sub_links = lit_links[curr_server,:]
+            curr_server = np.where(all_sub_links == 1)[0][0]
+            all_servers += [curr_server]
+            
+        return tuple(all_servers)
         
     
     def get_avgpath(self,s1,s2):
