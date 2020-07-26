@@ -56,7 +56,9 @@ class Resource_Constraints:
             server_rsrc[i,:] = servers[i].avail_rsrc
             
         # Set server and link resource
+        # (S,R,T)
         self.server_rsrc = np.repeat(np.expand_dims(server_rsrc,axis=-1),repeats=time_steps, axis=2)
+        # (S,S,T)
         self.link_rsrc = np.repeat(np.expand_dims(links.rsrc_avail,axis=-1), repeats=time_steps, axis=2)
     
     
