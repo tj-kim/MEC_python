@@ -32,6 +32,17 @@ class Job:
         # Draw latency penalty
         self.latency_penalty = self.draw_latency_penalty()
         
+        # Draw Thruput Penalty
+        self.thruput_penalty = self.draw_thruput_penalty()
+        
+        # Extract Values from user
+        self.mvmt_class = None
+        self.refresh_rate = None
+        self.refresh_flags = np.zeros(time_steps)
+        self.refresh_start_nodes = None
+        self.refresh_end_nodes = None
+        self.fresh_plan = True
+        
     def draw_UE_req(self):
         """
         Tap into job profile and obtain user experience thresholds
@@ -91,6 +102,54 @@ class Job:
         return np.random.uniform(self.job_profile.latency_penalty_range[0],
                                  self.job_profile.latency_penalty_range[1])
     
+    def draw_thruput_penalty(self):
+        
+        return np.random.uniform(self.job_profile.thruput_penalty_range[0],
+                                 self.job_profile.thruput_penalty_range[1])
+    
+    def info_from_usr(self, user, refresh_rate_list, refresh):
+        """
+        Get information from user for refresh rate (batched)
+        """
+        self.mvmt_class = user.mvmt_class
+        self.refresh_rate = refresh_rate_list[self.mvmt_class]
+        self.refresh = False
+        
+        # Make refresh flags         
+        if self.refresh_rate == 0 or refresh is False:
+            self.refresh_flags[self.arrival_time] = 1
+        else:
+            idx = 0
+            for t in range(self.arrival_time,self.departure_time):
+                if idx == self.refresh_rate:
+                    idx = 0
+                
+                if idx == 0:
+                    self.refresh_flags[t] = 1
+                idx += 1
+                
+        # Make pairs of start_end of each batch
+        self.refresh_flags[-1] = 0
+        flag_coordinates = np.where(self.refresh_flags == 1)[0]
+        flag_coordinates = np.append(flag_coordinates, self.time_steps - 1)
+        
+        self.refresh_start_nodes = {}
+        self.refresh_end_nodes = {}
+        
+        for i in range(len(flag_coordinates)-1):
+            t = flag_coordinates[i]
+            t_next = flag_coordinates[i+1]
+            # Check if its first planning
+            if t == self.arrival_time:
+                self.refresh_start_nodes[t] = (-1,-1)
+                self.refresh_end_nodes[t] = (-1,t_next+1)# (s,t)
+            
+            # Other Cases (Normal)
+            else:
+                self.refresh_start_nodes[t] = (-1,t)
+                self.refresh_end_nodes[t] = (-1,t_next+1)
+
+    
 class Job_Profile:
     """
     Make list of job profiles with
@@ -105,7 +164,8 @@ class Job_Profile:
                     length_range,
                     placement_rsrc_range,
                     migration_amt_range,
-                    latency_penalty_range):
+                    latency_penalty_range,
+                    thruput_penalty_range):
         """
         Add job profile to list 
         """
@@ -117,3 +177,4 @@ class Job_Profile:
         self.placement_rsrc_range = placement_rsrc_range
         self.migration_amt_range = migration_amt_range
         self.latency_penalty_range = latency_penalty_range
+        self.thruput_penalty_range = thruput_penalty_range

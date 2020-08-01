@@ -231,8 +231,8 @@ class User:
         for t in range(self.time_steps):
             for s in range(self.num_servers):
                 if s in self.user_voronoi[:,t]:
-                    self.dict_st2node[(s,t)] = node_count
-                    self.dict_node2st[node_count] = (s,t)
+                    self.dict_st2node[(int(s),int(t))] = node_count
+                    self.dict_node2st[node_count] = (int(s),int(t))
                     node_count += 1
         
         trans_matrix = np.zeros((node_count,node_count))
@@ -272,8 +272,8 @@ class User:
         for t in range(time_passed+1, self.time_steps):
             for s in range(self.num_servers):
                 if s in self.user_voronoi[:,t]:
-                    new_dict_st2node[(s,t)] = node_count
-                    new_dict_node2st[node_count] = (s,t)
+                    new_dict_st2node[(int(s),int(t))] = node_count
+                    new_dict_node2st[node_count] = (int(s),int(t))
                     node_count += 1
         
         trans_matrix = np.zeros((node_count,node_count))
@@ -281,7 +281,7 @@ class User:
         # Update transition matrix based on old one
         for source_node in range(trans_matrix.shape[0]):
             source_s, source_t = new_dict_node2st[source_node]
-            old_source_node = self.dict_st2node[(source_s,source_t)]
+            old_source_node = self.dict_st2node[(int(source_s),int(source_t))]
             for dest_node in range(trans_matrix.shape[1]):
                 dest_s, dest_t = new_dict_node2st[dest_node]
                 old_dest_node = self.dict_st2node[(dest_s, dest_t)]

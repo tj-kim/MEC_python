@@ -320,12 +320,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         
         return shortest_path, shortest_path_link_idx
     
-    def check_reserve_resource(self,j,shortest_path,shortest_path_link_idx):
+    def check_reserve_resource(self,j,shortest_path,shortest_path_link_idx,fresh_plan):
         """
         Look through system resources given edge sequence and return:
         - (s,t) (node) combinations we should strike out from valid links
         - (node1, node2, numpath) specific path numbers we should zero out in all cost
         - Flag whether or not plan has been reserved or not
+        - fresh_plan asks if we are the first batch or not the first batch
         """
         
         node_bans = []
@@ -352,11 +353,12 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
             # 1. Check server resources for all timesteps
             if server1 == server2 and s1_active:
                 for t in valid_times:
-                    # Server Check
-                    avail_rsrc_s2 = self.resource_constraints.server_rsrc[server1,:,t] # 1d shape
-                    for sr in range(avail_rsrc_s2.shape[0]):
-                        if (avail_rsrc_s2[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
-                            node_bans += [start_node]
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        # Server Check
+                        avail_rsrc_s1 = self.resource_constraints.server_rsrc[server1,:,t] # 1d shape
+                        for sr in range(avail_rsrc_s1.shape[0]):
+                            if (avail_rsrc_s1[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
+                                node_bans += [start_node]
                 
             elif server1 != server2 and s1_active and s2_active:
                 
@@ -364,9 +366,10 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                     avail_rsrc_s1 = self.resource_constraints.server_rsrc[server1,:,t]
                     avail_rsrc_s2 = self.resource_constraints.server_rsrc[server2,:,t] # 1d shape
                     
-                    for sr in range(avail_rsrc_s1.shape[0]):
-                        if (avail_rsrc_s1[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
-                            node_bans += [start_node]
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for sr in range(avail_rsrc_s1.shape[0]):
+                            if (avail_rsrc_s1[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
+                                node_bans += [start_node]
                     
                     for sr in range(avail_rsrc_s2.shape[0]):
                         if (avail_rsrc_s2[sr]-placement_rsrc[sr] < 0) and (end_node not in node_bans):
@@ -377,10 +380,12 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                 
             elif s1_active and (not s2_active):
                 for t in valid_times:
-                    avail_rsrc_s2 = self.resource_constraints.server_rsrc[server1,:,t] # 1d shape
-                    for sr in range(avail_rsrc_s2.shape[0]):
-                        if (avail_rsrc_s2[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
-                            node_bans += [start_node] 
+                    avail_rsrc_s1 = self.resource_constraints.server_rsrc[server1,:,t] # 1d shape
+                    
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for sr in range(avail_rsrc_s1.shape[0]):
+                            if (avail_rsrc_s1[sr]-placement_rsrc[sr] < 0) and (start_node not in node_bans):
+                                node_bans += [start_node] 
                 
             elif server1 == server2 and (not s1_active):
                 continue # Go to next node, no resources here
@@ -397,12 +402,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                     
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server2:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server2:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - exp_service
                     check = np.all(remain_link >= 0)
@@ -420,12 +426,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                 for t in valid_times:
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server1:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server1:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - (mig_amt*mig_links + exp_service)
                     check = np.all(remain_link >= 0)
@@ -441,12 +448,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                     
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server1:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server1:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - exp_service
                     check = np.all(remain_link >= 0)
@@ -460,12 +468,12 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
 
         # REserve resources and return    
         if (len(node_bans),len(path_bans)) == (0,0):
-            self.reserve_resources(j,shortest_path,shortest_path_link_idx)
+            self.reserve_resources(j,shortest_path,shortest_path_link_idx,fresh_plan)
             plan_reserved = True
             
         return node_bans, path_bans, plan_reserved
     
-    def reserve_resources(self,j,shortest_path,shortest_path_link_idx):
+    def reserve_resources(self,j,shortest_path,shortest_path_link_idx,fresh_plan):
         """
         Subtract resource reservations from existing resources
         """
@@ -490,16 +498,20 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
             # 1. Check server resources for all timesteps
             if server1 == server2 and s1_active:
                 for t in valid_times:
-                    self.resource_constraints.server_rsrc[server1,:,t] -= placement_rsrc# 1d shape
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        self.resource_constraints.server_rsrc[server1,:,t] -= placement_rsrc# 1d shape
                 
             elif server1 != server2 and s1_active and s2_active:                
                 for t in valid_times:
-                    self.resource_constraints.server_rsrc[server1,:,t] -= placement_rsrc
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        self.resource_constraints.server_rsrc[server1,:,t] -= placement_rsrc
+                    
                     self.resource_constraints.server_rsrc[server2,:,t] -= placement_rsrc
-                
-            elif (not s1_active) and s2_active:
+            
+            # Active to inactive this should be changed 
+            elif s1_active and not s2_active:
                 for t in valid_times:
-                    self.resource_constraints.server_rsrc[server2,:,t] -= placement_rsrc
+                    self.resource_constraints.server_rsrc[server1,:,t] -= placement_rsrc
           
 
             # 2. Check Link Resources for all timesteps
@@ -514,12 +526,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                     
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server2:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server2:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - exp_service
                     self.resource_constraints.link_rsrc[:,:,t] = remain_link 
@@ -534,12 +547,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                 for t in valid_times:
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server1:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server1:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - (mig_amt*mig_links + exp_service)
                     self.resource_constraints.link_rsrc[:,:,t] = remain_link             
@@ -552,12 +566,13 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
                     
                     avail_link = self.resource_constraints.link_rsrc[:,:,t]
                     
-                    for s_var in range(len(self.servers)):
-                        if s_var != server1:
-                            avg_link = self.links.get_avgpath(server1,s_var)
-                            usr_job_flag = self.users[j].server_prob[s_var,t]
-                            expected_sbw = np.multiply(service_bw, avg_link)
-                            exp_service += expected_sbw
+                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                        for s_var in range(len(self.servers)):
+                            if s_var != server1:
+                                avg_link = self.links.get_avgpath(server1,s_var)
+                                usr_job_flag = self.users[j].server_prob[s_var,t]
+                                expected_sbw = np.multiply(service_bw, avg_link)
+                                exp_service += expected_sbw
                     
                     remain_link = avail_link - exp_service
                     self.resource_constraints.link_rsrc[:,:,t] = remain_link

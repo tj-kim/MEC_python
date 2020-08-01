@@ -12,9 +12,9 @@ class PlanGenerator:
         
         # Store all components within the plan generator
         self.users = copy.copy(users) # Copy so that conditioning MC doesn't overwrite for other sims
-        self.servers = servers
-        self.links = links
-        self.jobs = jobs
+        self.servers = copy.copy(servers)
+        self.links = copy.copy(links)
+        self.jobs = copy.copy(jobs)
         self.sim_params = copy.copy(sim_params)
         
         # Define resource restrictions per timestep

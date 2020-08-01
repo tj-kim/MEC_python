@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import itertools
 
 class Migration_Plans:
     """
@@ -51,13 +52,16 @@ class Migration_Plans:
     Extraction Functions
     """
     
-    def from_ILP(self, ILP_prob):
+    def from_ILP(self, ILP_prob, solve_flag = True):
         """
         From decision variables h we want to replace the zero vectors of 
         self.mig_plan_dict with relevant values based on the decision vars
         
         Input: ILP_prob - an Optim_PlanGenerator object that already has been optimized
         """
+        
+        if solve_flag:
+            ILP_prob.prob.solve()
         
         # 1. Loop through all h_vars and obtain those that have been selected
         h_hit_keys = []
@@ -90,8 +94,51 @@ class Migration_Plans:
                 uh_keys.remove(key)
         
             self.ILP_plan_extract(uh_keys_ordered,j)
-                    
         
+        # 3. Reserve Resources From Resource Constraints
+        for j in range(len(ILP_prob.jobs)):
+            placement_rsrc = ILP_prob.jobs[j].placement_rsrc
+            mig_rsrc = ILP_prob.jobs[j].migration_rsrc
+            service_bw = ILP_prob.jobs[j].thruput_req
+            
+            plan_dict = self.mig_plan_dict[j]
+            for t in range(self.sim_params.time_steps):
+                # Reserve Placement Cost & Mig link cost
+                source_svr = int(plan_dict['source_server'][t])
+                dest_svr = int(plan_dict['dest_server'][t])
+                mig_rate = plan_dict['mig_rate'][t]
+                path_idx = int(plan_dict['mig_link_id'][t])
+                
+                if source_svr == dest_svr:
+                    ILP_prob.resource_constraints.server_rsrc[source_svr,:,t] -= placement_rsrc
+                else:
+                    ILP_prob.resource_constraints.server_rsrc[source_svr,:,t] -= placement_rsrc
+                    ILP_prob.resource_constraints.server_rsrc[dest_svr,:,t] -= placement_rsrc
+                    
+                    avail_link = ILP_prob.resource_constraints.link_rsrc[:,:,t]
+                    mig_links = ILP_prob.links.get_subpath(source_svr,dest_svr,path_idx)
+                    remain_link = avail_link - (mig_rsrc*mig_rate*mig_links)
+                    
+                    ILP_prob.resource_constraints.link_rsrc[:,:,t] = remain_link
+                
+                # Reserve Expected Service BAndwidth Cost
+                avail_link = ILP_prob.resource_constraints.link_rsrc[:,:,t]
+                exp_service = np.zeros((len(ILP_prob.servers),len(ILP_prob.servers)))
+                
+                for s_var in range(len(ILP_prob.servers)):
+                    if s_var != source_svr:
+                        avg_link = ILP_prob.links.get_avgpath(source_svr,s_var)
+                        usr_job_flag = ILP_prob.users[j].server_prob[s_var,t]
+                        expected_sbw = np.multiply(service_bw, avg_link)
+                        exp_service += expected_sbw
+                
+                remain_link = avail_link - exp_service
+                ILP_prob.resource_constraints.link_rsrc[:,:,t] = remain_link
+                
+        
+        self.prob = ILP_prob
+        self.service_path_selection()
+        self.thruput_selection()
         return
     
     def from_seq_greedy(self,SG_prob):
@@ -101,13 +148,60 @@ class Migration_Plans:
         """
         
         # Should add convert node informations
-        self.convert_node2st = SG_prob.convert_node2st
-        self.convert_st2node = SG_prob.convert_st2node
-        self.valid_links = SG_prob.valid_links
-        self.num_edges = SG_prob.num_edges
-        self.all_costs = SG_prob.all_costs
-        self.edge_weights_min = SG_prob.edge_weights_min
-        self.edge_weights_path_idx = SG_prob.edge_weights_path_idx
+
+        self.prob = SG_prob
+        
+        # Loop through time and user to generate incoming plans
+        for t in range(self.sim_params.time_steps):
+            for j in range(len(self.prob.jobs)):
+                
+                refresh_flag = jobs[j].refresh_flags[t]
+                # 1. Check for user arrival time
+                if refresh_flag == 1:
+                    
+                    # 0. Update user server prob
+                    self.prob.users[j].update_voronoi_probs(time_passed = t)
+                    
+                    node_bans = []
+                    path_bans = []
+                    approved_flag = False
+                    
+                    # Start Node and End Node of Mig plan
+                    start_node1 = jobs[j].refresh_start_nodes[t]
+                    end_node1 = jobs[j].refresh_end_nodes[t]
+                    start_node = self.prob.convert_st2node[j][start_node1]
+                    end_node = self.prob.convert_st2node[j][end_node1]
+                    
+                    while_idx = 0
+                    
+                    while not approved_flag:
+                        # print("usr:",j,"reserve:",while_idx)
+                        while_idx += 1
+                    
+                        # 2. If user arrives, make plan
+                        self.prob.calc_all_costs(j=0)
+                        self.prob.obtain_minimum_cost_j(j=0)
+
+                        node_num, link_num = self.prob.dijkstra_j(j=j,start_node=start_node,
+                                                                     end_node=end_node)
+                        
+                        
+                        # 3. Repeat resource reservation until no conflicts --> or reject job
+                        node_bans, path_bans, approved_flag = self.prob.check_reserve_resource(j,
+                                                              node_num,link_num)
+                        
+                        # Update cost graph
+                        if not approved_flag:
+                            self.prob.update_costs(j, node_bans,path_bans)
+                    
+                    
+                    # Extract plan and record to system
+                    self.seq_greedy_plan_extract(node_orders=node_num, 
+                                                 link_path_orders=link_num, 
+                                                 job_num=j)
+
+        self.service_path_selection()
+        self.thruput_selection()
     
     """
     Extraction function helpers
@@ -173,8 +267,8 @@ class Migration_Plans:
         
         # Loop through each of the keys (Use switch cases below)
         for (node1,node2) in pair_list:
-            (source_server, start_time) = self.convert_node2st[job_num][node1]
-            (dest_server, end_time) = self.convert_node2st[job_num][node2]
+            (source_server, start_time) = self.prob.convert_node2st[job_num][node1]
+            (dest_server, end_time) = self.prob.convert_node2st[job_num][node2]
             link_path = link_path_orders[path_idx]
             path_idx += 1
             
@@ -195,9 +289,8 @@ class Migration_Plans:
                 self.mig_plan_dict[job_num]["source_server"][start_time:end_time] = source_server
                 self.mig_plan_dict[job_num]["dest_server"][start_time:end_time] = source_server
     
-    # General
         
-    def reserve_service_bw(self,links,jobs):
+    def service_path_selection(self):
         """
         take into a consideration the resources at each link at each timestep, and determine
         Inputs:
@@ -207,20 +300,86 @@ class Migration_Plans:
         Updates migration plan to determine throughput of service at each instance
         """
         
-        # Loop through each ts
+        switch_latency = self.prob.links.switch_delay
+        dist_latency = self.prob.links.dist_delay
+        server_distances = self.prob.links.calc_distance(self.prob.servers)
         
-        # Loop through each plan
+        # Loop thru plan - pick service and calc latency for each ts
+        for j,t in itertools.product(range(len(self.prob.jobs)),range(self.sim_params.time_steps)):
+            usr_svr = int(self.mig_plan_dict[j]["user_voronoi"][t])
+            job_svr = int(self.mig_plan_dict[j]["source_server"][t])
+            
+            if usr_svr != job_svr:
+                # Calculate which path
+                num_path = int(self.prob.links.num_path[job_svr,usr_svr])
+                select_path = np.random.randint(0,num_path)
+                self.mig_plan_dict[j]['service_link_id'][t] = select_path
+            
+                # Calculate Latency
+                service_path = self.prob.links.get_subpath(job_svr,usr_svr,select_path)
+                num_switch = np.sum(np.sum(service_path,axis=1),axis=0)
+                
+                latency_dists = np.multiply(service_path,server_distances)
+                num_dist = np.sum(np.sum(latency_dists,axis=1),axis=0)
+               
+                self.mig_plan_dict[j]['latency'][t] = switch_latency * num_switch + num_dist * dist_latency
+            
+            else:
+                self.mig_plan_dict[j]["service_link_id"][t] = -1
+                
+    def thruput_selection(self):
+        """
+        After running service_path_selection() we can pick thruput of each job at each timestep
+        """
         
-        # 1. Select link randomly from available options
-        
-        # 2. If source/dest differ + active 
-        
-        # a. Loop through each of the links that is for this job
-        
-        # b. Loop through each of the active jobs that use this link
-        
-        # c. Find the bottleneck thruput based on proportions and reserve
-        # we will have slight inefficiency due to sequential reserve system but it'll be redundant
-        # across all users
-        
-        return
+        # Loop through each timestep 
+        for t in range(self.sim_params.time_steps):
+            
+            service_thruput = np.zeros(self.prob.links.distances.shape)
+            job_thruputs = []
+            
+            # Add all 
+            for j in range(len(self.prob.jobs)):
+                # Add to list job idx and thruput
+                job_thruputs += [self.prob.jobs[j].thruput_req]
+            
+            approved_flag = False
+            
+            # Adjust throughputs for this timestep
+            while not approved_flag:
+                for j in range(len(self.prob.jobs)):
+                    if self.mig_plan_dict[j]["service_link_id"][t] > -1:
+                        usr_svr = int(self.mig_plan_dict[j]["user_voronoi"][t])
+                        job_svr = int(self.mig_plan_dict[j]["source_server"][t])
+                        path_id = int(self.mig_plan_dict[j]["service_link_id"][t])
+
+                        service_links_j = self.prob.links.get_subpath(job_svr,usr_svr,path_id)
+                        service_thruput += job_thruputs[j] * service_links_j
+
+                remainder_link = self.prob.resource_constraints.link_rsrc[:,:,t] - service_thruput
+                
+                one_coor = zip(*np.where(remainder_link < 0))
+
+                if len(list(one_coor)) == 0:
+                    approved_flag = True
+                    continue
+                    
+                struck_jobs = []
+                
+                for (s1,s2) in one_coor:
+                    for j in range(len(self.prob.jobs)):
+                        if self.mig_plan_dict[j]["service_link_id"][t] > -1:
+                            usr_svr = int(self.mig_plan_dict[j]["user_voronoi"][t])
+                            job_svr = int(self.mig_plan_dict[j]["source_server"][t])
+                            path_id = int(self.mig_plan_dict[j]["service_link_id"][t])
+
+                            service_links_j = self.prob.links.get_subpath(job_svr,usr_svr,path_id)
+
+                            if service_links_j[s1,s2] > 0 and (j not in struck_jobs):
+                                job_thruputs[j] *= 0.9
+                                struck_jobs += [j]
+                                
+            # Record throughput for each job
+            for j in range(len(self.prob.jobs)):
+                thru_flag = (self.mig_plan_dict[j]["service_link_id"][t] > -1)
+                self.mig_plan_dict[j]["service_thruput"][t] = thru_flag * job_thruputs[j]
