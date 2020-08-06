@@ -1,6 +1,7 @@
 # Migration Plan Code goes here
 import time
 import itertools
+import copy
 from PlanGenerator import *
 
 # Dijkstra's Algorithm
@@ -27,12 +28,11 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         self.all_costs = {}
         self.edge_weights_min = {}
         self.edge_weights_path_idx = {}
+        self.num_path_limit = sim_params.num_path_limit # limit paths between 2 servers 
         
         # Build components above
         self.build_mig_graph()
-        
-        # self.calc_all_costs()
-        # self.obtain_minimum_cost()
+
     
     def build_mig_graph(self):
         """
@@ -152,13 +152,28 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
             self.valid_links += [u_valid_links]
             self.num_edges += [u_num_edges]
             
-    def calc_all_costs(self,j):
+    def calc_all_costs(self,j,start_node,end_node):
         """
         For every edge and path variation, calculate the cost and store in
         dictionary
         """
         
-        one_coor = zip(*np.where(self.valid_links[j] == 1))
+        # Truncate valid links matrix based on start and end time
+        temp_valid_links = copy.deepcopy(self.valid_links[j])
+        (start_svr, start_time) = self.convert_node2st[j][start_node]
+        (end_svr, end_time) = self.convert_node2st[j][end_node]
+        
+        
+        # Collect all nodes that are outside timezone
+        ban_nodes = []
+        for node_id in range(temp_valid_links.shape[0]):
+            curr_svr,curr_time = self.convert_node2st[j][node_id]
+            if curr_time > end_time or curr_time < start_time:
+                temp_valid_links[node_id,:] = 0
+                temp_valid_links[:,node_id] = 0
+        
+        
+        one_coor = zip(*np.where(temp_valid_links == 1))
         job_placement_rsrc = self.jobs[j].placement_rsrc
         job_migration_rsrc = self.jobs[j].migration_rsrc
 
@@ -169,6 +184,9 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
             (server1, time1) = self.convert_node2st[j][node1]
             (server2, time2) = self.convert_node2st[j][node2]
             num_path = self.num_edges[j][(node1,node2)]
+            
+            if num_path > self.num_path_limit:
+                num_path = self.num_path_limit
 
             (active1, active2) = (server1 > -1, server2 > -1)
             time_diff = time2-time1
@@ -263,7 +281,7 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         return service_bw_cost, curr_latency
             
 
-    def obtain_minimum_cost_j(self,j):
+    def obtain_minimum_cost_j(self,j,start_node,end_node):
         """
         For a specific user u
         """
@@ -271,10 +289,28 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         output_path_idx = np.zeros(self.valid_links[j].shape)
         cost_dict = self.all_costs[j]
         
-        one_coor = zip(*np.where(self.valid_links[j] == 1))
+        # Truncate valid links matrix based on start and end time
+        temp_valid_links = copy.deepcopy(self.valid_links[j])
+        (start_svr, start_time) = self.convert_node2st[j][start_node]
+        (end_svr, end_time) = self.convert_node2st[j][end_node]
         
+        
+        # Collect all nodes that are outside timezone
+        ban_nodes = []
+        for node_id in range(temp_valid_links.shape[0]):
+            curr_svr,curr_time = self.convert_node2st[j][node_id]
+            if curr_time > end_time or curr_time < start_time:
+                temp_valid_links[node_id,:] = 0
+                temp_valid_links[:,node_id] = 0
+        
+        
+        one_coor = zip(*np.where(temp_valid_links == 1))
+                
         for node1,node2 in one_coor:
             num_path = self.num_edges[j][(node1,node2)]
+            if num_path > self.num_path_limit:
+                num_path = self.num_path_limit
+            
             edges_list = []
             
             # Obtain all costs in an array
@@ -298,14 +334,14 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         """
         Find shortest point between start and end node 
         """
-        
+                
         edge_weights = self.edge_weights_min[j]
         d_graph = Dijkstra_Graph()
         
         one_coor = zip(*np.where(self.valid_links[j] == 1))
         
-        start_node = self.convert_st2node[j][(-1,-1)]
-        end_node = self.convert_st2node[j][(-1,self.sim_params.time_steps)]
+        # start_node = self.convert_st2node[j][(-1,-1)]
+        # end_node = self.convert_st2node[j][(-1,self.sim_params.time_steps)]
         
         for node1,node2 in one_coor:
             weight = edge_weights[node1,node2]

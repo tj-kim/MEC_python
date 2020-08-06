@@ -155,32 +155,42 @@ class Migration_Plans:
         for t in range(self.sim_params.time_steps):
             for j in range(len(self.prob.jobs)):
                 
-                refresh_flag = jobs[j].refresh_flags[t]
+                refresh_flag = self.prob.jobs[j].refresh_flags[t]
                 # 1. Check for user arrival time
                 if refresh_flag == 1:
                     
                     # 0. Update user server prob
                     self.prob.users[j].update_voronoi_probs(time_passed = t)
                     
+                    # Resource Reservation/Constraints Prep
                     node_bans = []
                     path_bans = []
                     approved_flag = False
                     
+                    # Flag if this is the first batch for this job
+                    fresh_plan = self.prob.jobs[j].fresh_plan
+                    if fresh_plan:
+                        self.prob.jobs[j].fresh_plan = False
+                    
                     # Start Node and End Node of Mig plan
-                    start_node1 = jobs[j].refresh_start_nodes[t]
-                    end_node1 = jobs[j].refresh_end_nodes[t]
+                    start_node1 = self.prob.jobs[j].refresh_start_nodes[t]
+                    end_node1 = self.prob.jobs[j].refresh_end_nodes[t]
+                    
+                    # Edit server of start node based on current node
+                    if t > self.prob.jobs[j].arrival_time:
+                        start_node1 = (self.mig_plan_dict[j]["source_server"][t], start_node1[1])
+                    
                     start_node = self.prob.convert_st2node[j][start_node1]
                     end_node = self.prob.convert_st2node[j][end_node1]
+                    self.prob.calc_all_costs(j,start_node,end_node)
                     
                     while_idx = 0
-                    
                     while not approved_flag:
-                        # print("usr:",j,"reserve:",while_idx)
+                        # print("usr:",j,"reserve:",while_idx,"t:",t)
                         while_idx += 1
                     
                         # 2. If user arrives, make plan
-                        self.prob.calc_all_costs(j=0)
-                        self.prob.obtain_minimum_cost_j(j=0)
+                        self.prob.obtain_minimum_cost_j(j,start_node,end_node)
 
                         node_num, link_num = self.prob.dijkstra_j(j=j,start_node=start_node,
                                                                      end_node=end_node)
@@ -188,12 +198,19 @@ class Migration_Plans:
                         
                         # 3. Repeat resource reservation until no conflicts --> or reject job
                         node_bans, path_bans, approved_flag = self.prob.check_reserve_resource(j,
-                                                              node_num,link_num)
+                                                              node_num,link_num,fresh_plan)
+                        
+                        # print("start_node:",start_node)
+                        # print("end_node:",end_node)
+                        # print("dijkstra:",node_num)
+                        # print("node_bans",node_bans)
+                        # print("path_bans",path_bans)
                         
                         # Update cost graph
                         if not approved_flag:
-                            self.prob.update_costs(j, node_bans,path_bans)
-                    
+                            self.prob.update_costs(j, node_bans,path_bans)   
+                            
+                        # set_trace()
                     
                     # Extract plan and record to system
                     self.seq_greedy_plan_extract(node_orders=node_num, 
@@ -309,10 +326,11 @@ class Migration_Plans:
             usr_svr = int(self.mig_plan_dict[j]["user_voronoi"][t])
             job_svr = int(self.mig_plan_dict[j]["source_server"][t])
             
-            if usr_svr != job_svr:
+            if usr_svr != job_svr and job_svr != -1:
                 # Calculate which path
                 num_path = int(self.prob.links.num_path[job_svr,usr_svr])
-                select_path = np.random.randint(0,num_path)
+                # select_path = np.random.randint(0,self.sim_params.num_path_limit)
+                select_path = 0
                 self.mig_plan_dict[j]['service_link_id'][t] = select_path
             
                 # Calculate Latency

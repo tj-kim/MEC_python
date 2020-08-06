@@ -11,11 +11,11 @@ class PlanGenerator:
     def __init__(self, users, servers, links, jobs, sim_params):
         
         # Store all components within the plan generator
-        self.users = copy.copy(users) # Copy so that conditioning MC doesn't overwrite for other sims
-        self.servers = copy.copy(servers)
-        self.links = copy.copy(links)
-        self.jobs = copy.copy(jobs)
-        self.sim_params = copy.copy(sim_params)
+        self.users = copy.deepcopy(users) # Copy so that conditioning MC doesn't overwrite for other sims
+        self.servers = copy.deepcopy(servers)
+        self.links = copy.deepcopy(links)
+        self.jobs = copy.deepcopy(jobs)
+        self.sim_params = copy.deepcopy(sim_params)
         
         # Define resource restrictions per timestep
         self.resource_constraints = self.set_resource_constraints(servers, links)
@@ -82,9 +82,10 @@ class Sim_Params:
     - length - 1 mile per unit length
     """
     
-    def __init__(self, time_steps, x_length, y_length, max_edge_length):
+    def __init__(self, time_steps, x_length, y_length, max_edge_length, num_path_limit):
         
         self.time_steps = time_steps
         self.x_length = x_length
         self.y_length = y_length
         self.max_edge_length = max_edge_length
+        self.num_path_limit = num_path_limit
