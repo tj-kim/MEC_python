@@ -291,3 +291,48 @@ class User:
         self.dict_node2st = new_dict_node2st
         self.MC_trans_matrix = trans_matrix
         
+class ONE_User(User):
+    """
+    Copy of user class that takes in ONE information instead
+    """
+# (boundaries, sim_param.time_steps, max_speed, num_path, num_path_orig, usr_info[30])]
+        
+    def __init__(self, boundaries, time_steps, max_speed, num_path, num_path_orig, one_sim_usr):
+        """
+        time_steps - how many timesteps to simulate user movement for.
+        numpath - number of random paths to simulate to make user markov chain
+        
+        """
+        
+        # Easy to store values
+        self.num_path = num_path
+        self.time_steps = time_steps
+        self.num_servers = None
+        self.user_id = None
+        self.one_sim_usr = one_sim_usr
+        
+        # Make user initial location
+        init_loc = one_sim_usr[0,2:4]
+        # Get average speed for lamda
+        lambda_u = np.mean(one_sim_usr[:,4])        
+        
+        # Draw future user location x numpath for travel
+        self.all_paths = self.generate_all_paths(boundaries, init_loc, 
+                                                 num_path, 1/lambda_u, 
+                                                 time_steps, max_speed)
+        
+        # Replace all_paths with num_path_orig
+        real_path = one_sim_usr[:time_steps,2:4].T
+        
+        for i in range(num_path_orig):
+            self.all_paths[i,:,:] = real_path
+        
+        # Select a single path as true path of movement for user
+        self.true_path_idx = np.array([0])
+        self.true_path = np.squeeze(self.all_paths[self.true_path_idx],axis=0)
+        
+        # User voronoi (All paths taken voronoi)
+        self.user_voronoi = None
+        self.user_voronoi_true = None
+        self.MC_trans_matrix = None
+        self.server_prob = None
