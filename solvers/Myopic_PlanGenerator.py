@@ -150,4 +150,28 @@ class Myopic_PlanGenerator(SeqGreedy_PlanGenerator):
                 dict_n1n2[(node1,node2,0)] = cost
 
             self.all_costs[j] = dict_n1n2
- 
+            
+            
+     # Subcost helper for latency and service bw
+    def service_latency_cost(self,j,server,t):
+
+        # Skew the latency calc process to consider previous ts server
+        if t > 0:
+            t = t-1
+        
+        service_bw_cost = 0
+        curr_latency = 0
+        for s_var in range(len(self.servers)):
+            if s_var != server:
+                avg_link = self.links.get_avgpath(server,s_var)
+
+                usr_job_flag = self.users[j].server_prob_true[s_var,t]
+                expected_link_cost = np.multiply(self.links.cost_links, avg_link)
+                total_link_cost = np.sum(np.sum(expected_link_cost,axis=1),axis=0)
+                service_bw_cost += self.jobs[j].thruput_req * usr_job_flag * total_link_cost
+
+                for s3, s4 in itertools.product(range(len(self.servers)),range(len(self.servers))):
+                    delay = self.links.switch_delay + self.links.dist_delay * self.links.get_distance(s3,s4)
+                    curr_latency += avg_link[s3,s4] * delay *usr_job_flag
+
+        return service_bw_cost, curr_latency

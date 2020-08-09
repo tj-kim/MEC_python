@@ -113,10 +113,11 @@ class Job:
         """
         self.mvmt_class = user.mvmt_class
         self.refresh_rate = refresh_rate_list[self.mvmt_class]
-        self.refresh = False
+        self.refresh = refresh
+        self.refresh_flags = np.zeros(self.refresh_flags.shape)
         
         # Make refresh flags         
-        if self.refresh_rate == 0 or refresh is False:
+        if self.refresh_rate == 0 or self.refresh is False:
             self.refresh_flags[self.arrival_time] = 1
         else:
             idx = 0
@@ -129,7 +130,7 @@ class Job:
                 idx += 1
                 
         # Make pairs of start_end of each batch
-        self.refresh_flags[-1] = 0
+        self.refresh_flags[self.departure_time-1] = 0
         flag_coordinates = np.where(self.refresh_flags == 1)[0]
         flag_coordinates = np.append(flag_coordinates, self.time_steps - 1)
         

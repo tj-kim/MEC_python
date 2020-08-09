@@ -45,6 +45,7 @@ class User:
         self.user_voronoi_true = None
         self.MC_trans_matrix = None
         self.server_prob = None
+        self.server_prob_true = None
         
     """
     Markov Chain Functions (Callable)
@@ -59,6 +60,10 @@ class User:
         self.user_voronoi = self.find_closest_servs(servers)
         self.user_voronoi_true = np.squeeze(self.user_voronoi[self.true_path_idx],axis=0)
         self.num_servers = len(servers)
+        
+        self.server_prob_true = np.zeros((len(servers),self.time_steps))
+        for t in range(self.user_voronoi_true.shape[0]):
+            self.server_prob_true[int(self.user_voronoi_true[t]),t] = 1
         
         # Obtain transition probabilities based on user voronoi on paths
         self.MC_trans_matrix = self.generate_transition_matrix()
@@ -297,7 +302,7 @@ class ONE_User(User):
     """
 # (boundaries, sim_param.time_steps, max_speed, num_path, num_path_orig, usr_info[30])]
         
-    def __init__(self, boundaries, time_steps, max_speed, num_path, num_path_orig, one_sim_usr):
+    def __init__(self, boundaries, time_steps, max_speed, num_path, num_path_orig, one_sim_usr, mvmt_class):
         """
         time_steps - how many timesteps to simulate user movement for.
         numpath - number of random paths to simulate to make user markov chain
@@ -310,6 +315,7 @@ class ONE_User(User):
         self.num_servers = None
         self.user_id = None
         self.one_sim_usr = one_sim_usr
+        self.mvmt_class = mvmt_class
         
         # Make user initial location
         init_loc = one_sim_usr[0,2:4]
@@ -336,3 +342,4 @@ class ONE_User(User):
         self.user_voronoi_true = None
         self.MC_trans_matrix = None
         self.server_prob = None
+        self.server_prob_true = None

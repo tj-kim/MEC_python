@@ -352,6 +352,10 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         
         for i in range(len(shortest_path)-1):
             p1, p2 = shortest_path[i],shortest_path[i+1]
+            
+            if p1 == "R":
+                print("not enough resources, simulation broken")
+                
             shortest_path_link_idx += [int(self.edge_weights_path_idx[j][p1,p2])]
         
         return shortest_path, shortest_path_link_idx
@@ -389,7 +393,7 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
             # 1. Check server resources for all timesteps
             if server1 == server2 and s1_active:
                 for t in valid_times:
-                    if (i != 0) or (t != valid_times[0]) or fresh_plan:
+                    if (i > 0) or (t > valid_times[0]) or fresh_plan:
                         # Server Check
                         avail_rsrc_s1 = self.resource_constraints.server_rsrc[server1,:,t] # 1d shape
                         for sr in range(avail_rsrc_s1.shape[0]):
@@ -623,8 +627,18 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         resource reservation stages
         """
         
+        t_list = []
+        for key in self.jobs[j].refresh_start_nodes:
+            (s,t) = self.jobs[j].refresh_start_nodes[key]
+            t_list += [t]
+        
         # Eliminate valid node based on server (to and from)
         for node in node_bans:
+            node_s, node_t = self.convert_node2st[j][node]
+            
+            if node_t in t_list:
+                print("self first step running out of resource")
+            
             self.valid_links[j][node,:] = 0
             self.valid_links[j][:,node] = 0
         
