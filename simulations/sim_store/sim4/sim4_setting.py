@@ -14,7 +14,7 @@ def simulation_setting():
     """
     Make Simulation Parameters
     """
-    sim_param = Sim_Params(time_steps=16, x_length = 2.4, y_length = 1.7, max_edge_length=3,num_path_limit=5)
+    sim_param = Sim_Params(time_steps=12, x_length = 2.4, y_length = 1.7, max_edge_length=3,num_path_limit=5)
     boundaries = np.array([[0,sim_param.x_length],[0,sim_param.y_length]])
 
 
@@ -63,13 +63,13 @@ def simulation_setting():
     """
 
     # Server Settings
-    num_server_l1 = 5
+    num_server_l1 = 4
     num_server_l2 = 2
     num_server_l3 = 1
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[4,6],[1000,1500],[4,16]])
+    weak_range = np.array([[5,8],[1000,1500],[4,16]])
     strong_range = np.array([[30,30],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
@@ -128,10 +128,10 @@ def simulation_setting():
     """
 
     # User Settings
-    num_user_m0 = 8 # stochastic
-    num_user_m1 = 0 # deterministic
-    num_user_m0_ONE = 7 # stochastic - ONE
-    num_user_m1_ONE = 0 # deterministic - ONE
+    num_user_m0 = 5 # stochastic
+    num_user_m1 = 1 # deterministic
+    num_user_m0_ONE = 2 # stochastic - ONE
+    num_user_m1_ONE = 2 # deterministic - ONE
     total_count = num_user_m0 + num_user_m1
 
     max_speed = 2.5
@@ -203,9 +203,9 @@ def simulation_setting():
     """
 
     # Job settings
-    job_type0 = 5 # VR
-    job_type1 = 5 # Assistant
-    job_type2 = 5 # AR
+    job_type0 = 4 # VR
+    job_type1 = 3 # Assistant
+    job_type2 = 3 # AR
 
     jobs0 = []
     jobs1 = []
