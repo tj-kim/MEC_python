@@ -1,3 +1,7 @@
 *.pickle
 *.p
 *.csv
+*.log
+/home/tkim/MEC_research/simulations/sim_store/sim1/cost_store.p
+/home/tkim/MEC_research/simulations/sim_store/sim2/cost_store.p
+
