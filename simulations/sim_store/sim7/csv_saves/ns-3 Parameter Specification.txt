@@ -1,0 +1,44 @@
+ns-3 Parameter Specification
+
+Change log (8/10/20)
+- all users and servers will start indexing at zero.
+- For each plan, more information about host server to enb nodes have been included
+	- the column enb svr has been added (equivalent to user voronoi)
+	- Mbps to enb - is the mbps from the host (source) server to enb
+	- to enb path - is the servers that have links that connect source/host server to enb
+- name changes
+	- source server --> source (host) svr
+	- Mbps --> mig Gb transferred (transmission speed of migration over single timestep)
+
+The following CSVs contain information of a simulation run with the following parameters
+- 10 servers
+- 20 users
+- 10 discrete timesteps
+- 2.4x1.7 mile space
+
+The system resources are
+- Fairly Limited, each level 1 server can fit approximately 2 jobs.
+
+
+Each one of the CSVs include information on the simulation.
+
+1) user_locs.csv
+
+This csv contains the x,y coordinates of every user in the system for the duration of 30 time steps. The units of the coordinates are in miles within the 1x1 mile simulation space. Every row represents a timestep. The columns are labeled with the user id, and whether the column represents an x or y coordinate in the system.
+
+2) user_voronoi.csv
+
+This csv contains information for each user regarding which server the user is closest to at every timestep. In other words, a voronoi tessellation was taken of the simulation space in regard to server locations. The rows represent timesteps. The servers are indexed from 1 to 10.
+
+3) server_locs.csv
+
+This csv contains the x,y coordinates of every server in the system. The units of the coordinates are in miles within the 1x1 mile simulation space. The columns are labeled with the server index and whether or not the value represents an x value or a y value.
+
+4) server_link_flag.csv
+
+This csv has SxS dimensions, where S is the number of servers in the system. The column index represents the source server and the row index represents the destination server. If a link exists between these two servers, I have put a 1, and a 0 if not. This csv was added because now not all servers are bi-directionally connected to each other.
+
+5) plan.csv
+
+There are three different migration plans generated each with a different method. The csv contains information which server a user request is hosted (source), and whether or not that process is migrating to another server (mig dest svr). The rows represent timesteps. The source server represents where the process is currently hosted. The destination server shows where the process is migrating to. Even if a process if migrating, the process is hosted at the source server until the migration is complete. The "proportion migration" column represents how much of the process is migrated from source to destination server in a single timestep. The mig Gb transferred column is equivalent to the "proportion migration" column, but shows the amount migrated between servers in terms of GB. The mig-path column holds a sequence of servers from start to end if a migration is taking place, and the links are through some intermediary servers. 
+(New) - information about how host (source) server sends packets to enb server has been added in the following columns: enb svr (equivalent to user voronoi), mbps to enb (how much Mb of data sent from source server to enb server), and to enb path (the sequence of servers that have links to forward packets between source and enb nodes).
