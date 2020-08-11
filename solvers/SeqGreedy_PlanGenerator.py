@@ -267,7 +267,10 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         curr_latency = 0
         for s_var in range(len(self.servers)):
             if s_var != server:
-                avg_link = self.links.get_avgpath(server,s_var)
+                # avg_link = self.links.get_avgpath(server,s_var)
+                
+                select_path = 0 # alternet method --> more realistic
+                avg_link = self.links.get_subpath(server,s_var,select_path)
 
                 usr_job_flag = self.users[j].server_prob[s_var,t]
                 expected_link_cost = np.multiply(self.links.cost_links, avg_link)

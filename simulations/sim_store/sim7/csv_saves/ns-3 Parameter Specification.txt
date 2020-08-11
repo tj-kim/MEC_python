@@ -1,5 +1,15 @@
 ns-3 Parameter Specification
 
+Change log (8/10/20)
+- all users and servers will start indexing at zero.
+- For each plan, more information about host server to enb nodes have been included
+	- the column enb svr has been added (equivalent to user voronoi)
+	- Mbps to enb - is the mbps from the host (source) server to enb
+	- to enb path - is the servers that have links that connect source/host server to enb
+- name changes
+	- source server --> source (host) svr
+	- Mbps --> mig Gb transferred (transmission speed of migration over single timestep)
+
 The following CSVs contain information of a simulation run with the following parameters
 - 10 servers
 - 20 users
@@ -30,4 +40,5 @@ This csv has SxS dimensions, where S is the number of servers in the system. The
 
 5) plan.csv
 
-There are three different migration plans generated each with a different method. The csv contains information which server a user request is hosted, and whether or not that process is migrating to another server. The rows represent timesteps. The source server represents where the process is currently hosted. The destination server shows where the process is migrating to. Even if a process if migrating, the process is hosted at the source server until the migration is complete. The "proportion migration" column represents how much of the process is migrated from source to destination server in a single timestep. The Mbps column is equivalent to the "proportion migration" column, but shows the amount migrated between servers in terms of MB. The mig-path column holds a sequence of servers from start to end if a migration is taking place, and the links are through some intermediary servers
+There are three different migration plans generated each with a different method. The csv contains information which server a user request is hosted (source), and whether or not that process is migrating to another server (mig dest svr). The rows represent timesteps. The source server represents where the process is currently hosted. The destination server shows where the process is migrating to. Even if a process if migrating, the process is hosted at the source server until the migration is complete. The "proportion migration" column represents how much of the process is migrated from source to destination server in a single timestep. The mig Gb transferred column is equivalent to the "proportion migration" column, but shows the amount migrated between servers in terms of GB. The mig-path column holds a sequence of servers from start to end if a migration is taking place, and the links are through some intermediary servers. 
+(New) - information about how host (source) server sends packets to enb server has been added in the following columns: enb svr (equivalent to user voronoi), mbps to enb (how much Mb of data sent from source server to enb server), and to enb path (the sequence of servers that have links to forward packets between source and enb nodes).
