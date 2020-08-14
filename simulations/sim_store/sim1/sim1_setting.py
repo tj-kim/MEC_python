@@ -10,7 +10,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting():    
+def simulation_setting(resources = 'limited'):    
     """
     Make Simulation Parameters
     """
@@ -52,38 +52,6 @@ def simulation_setting():
                                latency_penalty_range = [0.6*1.5, 1*1.5],
                                thruput_penalty_range = [0.4, 0.6])
     
-    """
-    job_profile1 = Job_Profile(job_name = "VR",
-                               latency_req_range=[25/1000, 40/1000], 
-                               thruput_req_range=[50/1000, 200/1000], 
-                               length_range=[5,5],  
-                               placement_rsrc_range = np.array([[2,3],[8,16],[2,5]]),
-                               migration_amt_range = [1, 2],
-                               # latency_penalty_range = [0.05, 0.1],
-                               latency_penalty_range = [0.4,0.8],
-                               thruput_penalty_range = [0.4,0.8]) 
-
-    job_profile2 = Job_Profile(job_name = "Assistant",
-                               latency_req_range=[100/1000, 200/1000],
-                               thruput_req_range=[5/1000, 20/1000],
-                               length_range=[5,5],
-                               placement_rsrc_range = np.array([[1,1],[0.5,1],[0.5,1]]),
-                               migration_amt_range = [0.5, 1],
-                               latency_penalty_range = [0.1, 0.2],
-                               thruput_penalty_range = [0.02,0.1])
-
-    job_profile3 = Job_Profile(job_name = "AR",
-                               latency_req_range=[50/1000, 80/1000], 
-                               thruput_req_range=[20/1000, 50/1000],
-                               length_range=[5,5],
-                               placement_rsrc_range = np.array([[1,2],[2,4],[1,2]]),
-                               migration_amt_range = [0.6, 1.2],
-                               latency_penalty_range = [0.2, 0.4],
-                               thruput_penalty_range = [0.2, 0.4])
-    """
-
-    job_profiles = [job_profile1, job_profile2, job_profile3]
-
 
     job_profiles = [job_profile1, job_profile2, job_profile3]
 
@@ -93,20 +61,24 @@ def simulation_setting():
     """
 
     # Server Settings
-    num_server_l1 = 0
-    num_server_l2 = 5
-    num_server_l3 = 0
+    num_server_l1 = 2
+    num_server_l2 = 2
+    num_server_l3 = 1
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[3,5],[1000,1500],[4,16]])
-    strong_range = np.array([[3,5],[10000,20000],[1000,1500]])
+    if resources == 'limited':
+        weak_range = np.array([[4,5],[1000,1500],[4,16]])
+        strong_range = np.array([[8,10],[10000,20000],[1000,1500]])
+    else:
+        weak_range = np.array([[100,100],[1000,1500],[100,100]])
+        strong_range = np.array([[100,100],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
-    rsrc_cost_scale_lv1 = 1.5
+    rsrc_cost_scale_lv1 = 1.1
     rsrc_cost_scale_lv2 = 1
-    rsrc_cost_scale_lv3 = 1
+    rsrc_cost_scale_lv3 = 0.9
 
     # Generate Server
     servers_l1 = []
@@ -129,7 +101,7 @@ def simulation_setting():
         idx_counter += 1
 
     for i in range(num_server_l3):
-        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([200,200])))
+        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([10,0])))
         servers_l3[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l3[-1].assign_id(idx_counter)
         servers_l3[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv3)
@@ -145,7 +117,7 @@ def simulation_setting():
     # Link Settings
     num_link = [0,1,2,3]
     prob_link = [0.5,0.2,0.2,0.1]
-    lv_minmax = np.array(([[50,100],[7,10],[3000,5000]]))
+    lv_minmax = np.array(([[50,100],[20,20],[3000,5000]]))
     lv1_transmission = 1
     link_costs = np.array([0.05, 0.02, 0.01])
     latency_settings = [300 * 1e-3, 60 * 1e-3] #[ms per switch, ms per mile]
@@ -158,13 +130,14 @@ def simulation_setting():
     """
 
     # User Settings
-    num_user_m0 = 2 # stochastic
-    num_user_m1 = 4 # deterministic
+    num_user_m0 = 0 # stochastic
+    num_user_m1 = 2 # deterministic
+    num_user_m0_ONE = 0 # stochastic - ONE
+    num_user_m1_ONE = 4 # deterministic - ONE
     total_count = num_user_m0 + num_user_m1
 
     max_speed = 2.5
-    num_path = 10
-    num_path_orig = 2
+    lamdas = [1/0.9,1/0.9] # 3 mph, 10 mph, 20 mph
 
     # Generate Server
     users_m0 = []
@@ -179,9 +152,19 @@ def simulation_setting():
     
     random.shuffle(key_list)
     
-    # Generate ONE Users
+    # Generate Stochastic users
     mvmt_class = 0
+    num_path = 30
+    num_path_orig = 1
+    
     for i in range(num_user_m0):
+        users_m0 += [User(boundaries, sim_param.time_steps, mvmt_class, lamdas, 
+                          max_speed, num_path)]
+        users_m0[-1].generate_MC(servers)
+        users_m0[-1].assign_id(idx_counter)
+        idx_counter += 1
+    
+    for i in range(num_user_m0_ONE):
         usr_idx = key_list[idx_counter]
         users_m0 += [ONE_User(boundaries, sim_param.time_steps, 
                               max_speed, num_path, num_path_orig, 
@@ -190,10 +173,21 @@ def simulation_setting():
         users_m0[-1].assign_id(idx_counter)
         idx_counter += 1
 
+        
+    # Generate Deterministic Users
     mvmt_class = 1
     num_path = 1
     num_path_orig = 1
+    
     for i in range(num_user_m1):
+        users_m1 += [User(boundaries, sim_param.time_steps, mvmt_class, lamdas, 
+                          max_speed, num_path)]
+        users_m1[-1].generate_MC(servers)
+        users_m1[-1].assign_id(idx_counter)
+        idx_counter += 1
+        
+    
+    for i in range(num_user_m1_ONE):
         usr_idx = key_list[idx_counter]
         users_m1 += [ONE_User(boundaries, sim_param.time_steps,
                               max_speed, num_path, num_path_orig, 

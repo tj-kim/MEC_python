@@ -18,7 +18,7 @@ class Dijkstra_Graph():
         self.edges[to_node].append(from_node)
         self.weights[(from_node, to_node)] = weight
         # Comment out value to make graph not bi-directional
-        self.weights[(to_node, from_node)] = 1e10
+        self.weights[(to_node, from_node)] = 1e10 # weight # Altered from 1e10
 
 # Function that finds shortest path of aforementioned graph
 def dijsktra(graph, initial, end):

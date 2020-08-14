@@ -250,12 +250,12 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
 
             # Case 3 - Inactive to Inactive
             elif (not active1) and (not active2):
-                cost = 1
+                cost = 0.01
                 dict_n1n2[(node1,node2,0)] = cost
 
             # Case 4 - Active to Inactive
             elif active1 and (not active2):
-                cost = 1
+                cost = 0.01
                 dict_n1n2[(node1,node2,0)] = cost
 
             self.all_costs[j] = dict_n1n2
@@ -639,8 +639,7 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         for node in node_bans:
             node_s, node_t = self.convert_node2st[j][node]
             
-            if node_t in t_list:
-                print("self first step running out of resource")
+            print("Struck Placement Resource (j,s,t):", j, node_s, node_t)
             
             self.valid_links[j][node,:] = 0
             self.valid_links[j][:,node] = 0
@@ -648,4 +647,5 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         # Eliminate All links - replace specific edge weights with zero
         for (start_node,end_node,path_idx) in path_bans:
             if self.valid_links[j][start_node,end_node] == 1:
+                print("Struck Link Resource (j,s1,s2,t,p):", j, s_start,s_end,t_end,path_idx)
                 self.all_costs[j][(start_node,end_node,path_idx)] = 0

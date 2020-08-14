@@ -28,7 +28,7 @@ def simulation_setting():
     job_profile1 = Job_Profile(job_name = "VR",
                                latency_req_range=[25/1000*0, 40/1000*0], 
                                thruput_req_range=[100/1000, 400/1000], 
-                               length_range=[6,8],  
+                               length_range=[8,10],  
                                placement_rsrc_range = np.array([[2,3],[8,16],[2,5]]),
                                migration_amt_range = [2, 3],
                                latency_penalty_range = [0.8*1.5,1.2*1.5],
@@ -46,7 +46,7 @@ def simulation_setting():
     job_profile3 = Job_Profile(job_name = "AR",
                                latency_req_range=[50/1000 * 0 , 80/1000 * 0 ], 
                                thruput_req_range=[90/1000, 300/1000],
-                               length_range=[5,7],
+                               length_range=[7,9],
                                placement_rsrc_range = np.array([[1,2],[2,4],[1,2]]),
                                migration_amt_range = [1.5, 2.5],
                                latency_penalty_range = [0.6*1.5, 1*1.5],
@@ -69,8 +69,8 @@ def simulation_setting():
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[8,12],[1000,1500],[4,16]])
-    strong_range = np.array([[20,30],[10000,20000],[1000,1500]])
+    weak_range = np.array([[6,8],[1000,1500],[100,100]])
+    strong_range = np.array([[14,20],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -99,7 +99,7 @@ def simulation_setting():
         idx_counter += 1
 
     for i in range(num_server_l3):
-        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([200,200])))
+        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([10,0])))
         servers_l3[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l3[-1].assign_id(idx_counter)
         servers_l3[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv3)
@@ -128,10 +128,10 @@ def simulation_setting():
     """
 
     # User Settings
-    num_user_m0 = 7 # stochastic
-    num_user_m1 = 3 # deterministic
-    num_user_m0_ONE = 6 # stochastic - ONE
-    num_user_m1_ONE = 4 # deterministic - ONE
+    num_user_m0 = 8 # stochastic
+    num_user_m1 = 2 # deterministic
+    num_user_m0_ONE = 5 # stochastic - ONE
+    num_user_m1_ONE = 5 # deterministic - ONE
     total_count = num_user_m0 + num_user_m1
 
     max_speed = 2.5
@@ -250,7 +250,7 @@ def simulation_setting():
     - Add batch functionality to jobs
     """
 
-    refresh_rate = [3,0]
+    refresh_rate = [2,0]
     refresh = True
 
     for j in range(len(jobs)):

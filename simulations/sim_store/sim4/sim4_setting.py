@@ -69,8 +69,8 @@ def simulation_setting():
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[5,8],[1000,1500],[4,16]])
-    strong_range = np.array([[30,30],[10000,20000],[1000,1500]])
+    weak_range = np.array([[4,6],[1000,1500],[100,100]])
+    strong_range = np.array([[6,8],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 

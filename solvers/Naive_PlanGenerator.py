@@ -256,12 +256,12 @@ class Naive_PlanGenerator(SeqGreedy_PlanGenerator):
 
             # Case 3 - Inactive to Inactive
             elif (not active1) and (not active2):
-                cost = 1
+                cost = 0.01
                 dict_n1n2[(node1,node2,0)] = cost
 
             # Case 4 - Active to Inactive
             elif active1 and (not active2):
-                cost = 1
+                cost = 0.01
                 dict_n1n2[(node1,node2,0)] = cost
 
             self.all_costs[j] = dict_n1n2
