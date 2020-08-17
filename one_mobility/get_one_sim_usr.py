@@ -11,8 +11,8 @@ def get_one_sim_usr():
 
     # Data polishing
     meter2mile = 0.000621371
-    # Convert Time from seconds --> 5 min intervals
-    one_sim_data[:,0] *= (1/300)
+    # Convert Time from seconds --> 5 min intervals, or 200s interval for ns3 sim
+    # one_sim_data[:,0] *= (1/300)
     one_sim_data[:,0] = np.floor(one_sim_data[:,0])
     # Convert distance from meters --> Miles
     one_sim_data[:,2] *= meter2mile

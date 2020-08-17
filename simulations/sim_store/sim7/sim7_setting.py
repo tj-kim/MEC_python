@@ -69,8 +69,8 @@ def simulation_setting():
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[8,12],[1000,1500],[4,16]])
-    strong_range = np.array([[30,30],[10000,20000],[1000,1500]])
+    weak_range = np.array([[8,8],[1000,1500],[40,160]])
+    strong_range = np.array([[20,30],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -99,7 +99,7 @@ def simulation_setting():
         idx_counter += 1
 
     for i in range(num_server_l3):
-        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([200,200])))
+        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([10,0])))
         servers_l3[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l3[-1].assign_id(idx_counter)
         servers_l3[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv3)
@@ -118,7 +118,8 @@ def simulation_setting():
     lv_minmax = np.array(([[60,100],[1000,3000],[3000,5000]]))
     lv1_transmission = 1
     link_costs = np.array([0.06, 0.06, 0.06])
-    latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
+    # latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
+    latency_settings = [250 * 1e-3, 0 * 1e-3] #[ms per switch, ms per mile]
 
     links = Link(servers, num_link, prob_link, lv_minmax, link_costs, latency_settings,lv1_transmission)
 
@@ -152,8 +153,8 @@ def simulation_setting():
     
     # Generate Stochastic users
     mvmt_class = 0
-    num_path = 30
-    num_path_orig = 1
+    num_path = 10
+    num_path_orig = 3
     
     for i in range(num_user_m0):
         users_m0 += [User(boundaries, sim_param.time_steps, mvmt_class, lamdas, 
@@ -250,7 +251,7 @@ def simulation_setting():
     - Add batch functionality to jobs
     """
 
-    refresh_rate = [3,0]
+    refresh_rate = [2,0]
     refresh = True
 
     for j in range(len(jobs)):
