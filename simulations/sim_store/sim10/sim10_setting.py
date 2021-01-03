@@ -10,7 +10,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting():    
+def simulation_setting(num_server,num_user):    
     """
     Make Simulation Parameters
     """
@@ -63,7 +63,7 @@ def simulation_setting():
     """
 
     # Server Settings
-    num_server_l1 = 6
+    num_server_l1 = num_server-4
     num_server_l2 = 3
     num_server_l3 = 1
 
@@ -128,9 +128,9 @@ def simulation_setting():
     """
 
     # User Settings
-    num_user_m0 = 10 # stochastic
+    num_user_m0 = int(num_user/2) # stochastic
     num_user_m1 = 0 # deterministic
-    num_user_m0_ONE = 10 # stochastic - ONE
+    num_user_m0_ONE = int(num_user/2) # stochastic - ONE
     num_user_m1_ONE = 0 # deterministic - ONE
     total_count = num_user_m0 + num_user_m1
 
