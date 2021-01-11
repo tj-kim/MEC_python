@@ -14,7 +14,8 @@ def simulation_setting():
     """
     Make Simulation Parameters
     """
-    sim_param = Sim_Params(time_steps=30, x_length = 2.4, y_length = 1.7, max_edge_length=2,num_path_limit=5)
+    ts = 50
+    sim_param = Sim_Params(time_steps=ts, x_length = 2.4, y_length = 1.7, max_edge_length=2,num_path_limit=5)
     boundaries = np.array([[0,sim_param.x_length],[0,sim_param.y_length]])
 
 
@@ -28,7 +29,7 @@ def simulation_setting():
     job_profile1 = Job_Profile(job_name = "VR",
                                latency_req_range=[25/1000*0, 40/1000*0], 
                                thruput_req_range=[100/1000, 400/1000], 
-                               length_range=[30,30],  
+                               length_range=[ts,ts],  
                                placement_rsrc_range = np.array([[2,3],[8,16],[2,5]]),
                                migration_amt_range = [2, 3],
                                latency_penalty_range = [0.8*1.5,1.2*1.5],
@@ -37,7 +38,7 @@ def simulation_setting():
     job_profile2 = Job_Profile(job_name = "Assistant",
                                latency_req_range=[100/1000 * 0 , 200/1000 * 0 ],
                                thruput_req_range=[50/1000, 100/1000],
-                               length_range=[30,30],
+                               length_range=[ts,ts],
                                placement_rsrc_range = np.array([[1,1],[0.5,1],[0.5,1]]),
                                migration_amt_range = [1, 2],
                                latency_penalty_range = [0.5*1.5, 0.8*1.5],
@@ -46,7 +47,7 @@ def simulation_setting():
     job_profile3 = Job_Profile(job_name = "AR",
                                latency_req_range=[50/1000 * 0 , 80/1000 * 0 ], 
                                thruput_req_range=[90/1000, 300/1000],
-                               length_range=[30,30],
+                               length_range=[ts,ts],
                                placement_rsrc_range = np.array([[1,2],[2,4],[1,2]]),
                                migration_amt_range = [1.5, 2.5],
                                latency_penalty_range = [0.6*1.5, 1*1.5],
@@ -128,9 +129,9 @@ def simulation_setting():
     """
 
     # User Settings
-    num_user_m0 = 10 # stochastic
+    num_user_m0 = 20 # stochastic
     num_user_m1 = 0 # deterministic
-    num_user_m0_ONE = 10 # stochastic - ONE
+    num_user_m0_ONE = 0 # stochastic - ONE
     num_user_m1_ONE = 0 # deterministic - ONE
     total_count = num_user_m0 + num_user_m1
 
