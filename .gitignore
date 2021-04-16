@@ -2,5 +2,5 @@
 *.p
 *.csv
 *.log
-/home/tkim/MEC_research/simulations/sim_store/
-
+/home/tkim/CMU/MEC_research/simulations/sim_store/
+/home/tkim/CMU/MEC_research/crawford_mobility/
