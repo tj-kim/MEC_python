@@ -124,8 +124,8 @@ def simulation_setting_ample(db):
     prob_link = [0.5,0.2,0.2,0.1]
     lv_minmax = np.array(([[25,40],[1000,3000],[3000,5000]]))
     lv1_transmission = 1
-    link_costs = np.array([0.06, 0.06, 0.06])
-    latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
+    link_costs = np.array([0.06, 0.06, 0.06]) *2
+    latency_settings = [250/2 * 1e-3, 50/2 * 1e-3] #[ms per switch, ms per mile]
 
     links = Link(servers, num_link, prob_link, lv_minmax, link_costs, latency_settings,lv1_transmission)
 
