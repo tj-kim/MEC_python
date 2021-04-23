@@ -349,7 +349,7 @@ class Crawdad_User(User):
     Copy of user class that takes in Crawdad data information instead
     """
         
-    def __init__(self, boundaries, time_steps, max_speed, num_path, num_path_orig, mvmt_array, mvmt_class):
+    def __init__(self, boundaries, time_steps, max_speed, num_path, num_path_orig, mvmt_array, mean_spd, mvmt_class):
         """
         time_steps - how many timesteps to simulate user movement for.
         numpath - number of random paths to simulate to make user markov chain
@@ -361,7 +361,7 @@ class Crawdad_User(User):
         self.time_steps = time_steps
         self.num_servers = None
         self.user_id = None
-        self.mvmt_array = self.draw_ts(mvmt_array, time_steps)
+        self.mvmt_array = mvmt_array
         self.mvmt_class = mvmt_class
         
         # Make user initial location
@@ -369,7 +369,7 @@ class Crawdad_User(User):
         
         init_loc = self.mvmt_array[0,:]
         # Get average speed for lamda
-        lambda_u = self.avg_speed(self.mvmt_array)
+        lambda_u = mean_spd
         # Adjust if zero
         if lambda_u == 0:
             lambda_u = 10e-4
@@ -396,34 +396,34 @@ class Crawdad_User(User):
         self.server_prob = None
         self.server_prob_true = None
         
-    def draw_ts(self, mvmt_array, time_steps):
-        """
-        select subset of array of mvmt for x timesteps,
-        adjust initial ts to be 0 (or just have x,y)
-        """
         
-        # select random TS
-        total_run = mvmt_array.shape[0]
-        init_ts = np.random.randint(0,int(total_run-time_steps))
-        
-        new_mvmt_array = mvmt_array[init_ts:init_ts+int(time_steps), 1:]
-        
-        return new_mvmt_array
-    
-    def avg_speed(self, new_mvmt_array):
-        """
-        returns a single double mean speed that a user goes 
-        given x,y inputs from new_mvmt_array
-        """
-        
-        length = new_mvmt_array.shape[0]-1
-        mean_mvmt = 0
-        
-        for i in range(length):
-            x1,y1 = new_mvmt_array[i,0], new_mvmt_array[i,1]
-            x2,y2 = new_mvmt_array[i+1,0], new_mvmt_array[i+1,1]
-            dist = np.sqrt((x2-x1)**2 + (y2-y1)**2)
-            
-            mean_mvmt += dist/length
-    
-        return mean_mvmt
+def avg_speed(new_mvmt_array):
+    """
+    returns a single double mean speed that a user goes 
+    given x,y inputs from new_mvmt_array
+    """
+
+    length = new_mvmt_array.shape[0]-1
+    mean_mvmt = 0
+
+    for i in range(length):
+        x1,y1 = new_mvmt_array[i,0], new_mvmt_array[i,1]
+        x2,y2 = new_mvmt_array[i+1,0], new_mvmt_array[i+1,1]
+        dist = np.sqrt((x2-x1)**2 + (y2-y1)**2)
+
+        mean_mvmt += dist/length
+
+    return mean_mvmt
+
+def draw_ts(mvmt_array, time_steps):
+    """
+    select subset of array of mvmt for x timesteps,
+    adjust initial ts to be 0 (or just have x,y)
+    """
+
+    # select random TS
+    total_run = mvmt_array.shape[0]
+    init_ts = np.random.randint(0,int(total_run-time_steps))
+
+    new_mvmt_array = mvmt_array[init_ts:init_ts+int(time_steps), 1:]
+    return new_mvmt_array

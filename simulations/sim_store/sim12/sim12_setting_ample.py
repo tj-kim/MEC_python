@@ -12,7 +12,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting(db):    
+def simulation_setting_ample(db):    
     
     """
     Make Simulation Parameters
@@ -66,14 +66,14 @@ def simulation_setting(db):
     """
 
     # Server Settings
-    num_server_l1 = 6
-    num_server_l2 = 3
+    num_server_l1 = 8
+    num_server_l2 = 1
     num_server_l3 = 1
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[5,7],[1000,1500],[100,100]])
-    strong_range = np.array([[10,15],[10000,20000],[1000,1500]])
+    weak_range = np.array([[60,80],[10000,15000],[1000,1000]])
+    strong_range = np.array([[100,150],[100000,200000],[10000,15000]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -124,8 +124,8 @@ def simulation_setting(db):
     prob_link = [0.5,0.2,0.2,0.1]
     lv_minmax = np.array(([[25,40],[1000,3000],[3000,5000]]))
     lv1_transmission = 1
-    link_costs = np.array([0.06, 0.06, 0.06]) * 2 # multiply cost by 2
-    latency_settings = [250/2 * 1e-3, 50/2 * 1e-3] #[ms per switch, ms per mile] - div cost by 2
+    link_costs = np.array([0.06, 0.06, 0.06])
+    latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
 
     links = Link(servers, num_link, prob_link, lv_minmax, link_costs, latency_settings,lv1_transmission)
 
@@ -142,7 +142,7 @@ def simulation_setting(db):
     num_path_orig = 2
     mvmt_class = 0 # Dummy
 
-    spd_thresh = [0.2, 3]
+    spd_thresh = [0.5, 5]
     boundary_thresh = [boundaries[0,1],boundaries[1,1]]
 
     # Generate Server
