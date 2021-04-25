@@ -5,16 +5,30 @@ from Link import *
 from Job import *
 from PlanGenerator import *
 from get_one_sim_usr import *
+from load_crawdad_usr import *
+
 import os, sys
 
 import numpy as np
 import random
 
-def simulation_setting(usr_lambda,batch_ts):    
+# Import All Custom Classes
+from Server import *
+from User import *
+from Link import *
+from Job import *
+from PlanGenerator import *
+from get_one_sim_usr import *
+import os, sys
+
+import numpy as np
+import random
+
+def simulation_setting(db,usr_lambda,batch_ts):    
     """
     Make Simulation Parameters
     """
-    sim_param = Sim_Params(time_steps=12, x_length = 2.4, y_length = 1.7, max_edge_length=1,num_path_limit=1)
+    sim_param = Sim_Params(time_steps=12, x_length = 5, y_length = 5, max_edge_length=1,num_path_limit=5)
     boundaries = np.array([[0,sim_param.x_length],[0,sim_param.y_length]])
 
 
@@ -51,8 +65,7 @@ def simulation_setting(usr_lambda,batch_ts):
                                migration_amt_range = [1.5, 2.5],
                                latency_penalty_range = [0.6*1.5, 1*1.5],
                                thruput_penalty_range = [0.4, 0.6])
-
-
+    
 
     job_profiles = [job_profile1, job_profile2, job_profile3]
 
@@ -62,14 +75,16 @@ def simulation_setting(usr_lambda,batch_ts):
     """
 
     # Server Settings
-    num_server_l1 = 4
-    num_server_l2 = 3
+    num_server_l1 = 5
+    num_server_l2 = 2
     num_server_l3 = 1
+    
+    custom_locs = [[1,1],[1,4],[4,1],[4,4], [2.5,2.5], [2.5,1], [2.5,4]]
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[30,50],[1000,1500],[4,16]])
-    strong_range = np.array([[100,300],[10000,20000],[1000,1500]])
+    weak_range = np.array([[400,600],[1000,1500],[100,100]])
+    strong_range = np.array([[600,800],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -84,21 +99,21 @@ def simulation_setting(usr_lambda,batch_ts):
     idx_counter = 0
 
     for i in range(num_server_l1):
-        servers_l1.append(Server(boundaries,level=1,rand_locs=True,locs=None))
+        servers_l1.append(Server(boundaries,level=1,rand_locs=False,locs=np.array(custom_locs[idx_counter])))
         servers_l1[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l1[-1].assign_id(idx_counter)
         servers_l1[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv1)
         idx_counter += 1
 
     for i in range(num_server_l2):
-        servers_l2.append(Server(boundaries,level=2,rand_locs=True,locs=None))
+        servers_l2.append(Server(boundaries,level=2,rand_locs=False,locs=np.array(custom_locs[idx_counter])))
         servers_l2[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l2[-1].assign_id(idx_counter)
         servers_l2[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv2)
         idx_counter += 1
 
     for i in range(num_server_l3):
-        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([200,200])))
+        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([10,10])))
         servers_l3[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l3[-1].assign_id(idx_counter)
         servers_l3[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv3)
@@ -114,86 +129,77 @@ def simulation_setting(usr_lambda,batch_ts):
     # Link Settings
     num_link = [0,1,2,3]
     prob_link = [0.5,0.2,0.2,0.1]
-    lv_minmax = np.array(([[100,200],[1000,3000],[3000,5000]]))
+    lv_minmax = np.array(([[25,40],[1000,3000],[3000,5000]]))*100
     lv1_transmission = 1
-    link_costs = np.array([0.06, 0.06, 0.06])
-    latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
+    link_costs = np.array([0.06, 0.06, 0.06]) * 2 # multiply cost by 2
+    latency_settings = [250/2 * 1e-3, 50/2 * 1e-3] #[ms per switch, ms per mile] - div cost by 2
 
     links = Link(servers, num_link, prob_link, lv_minmax, link_costs, latency_settings,lv1_transmission)
-
 
     """
     Make Users
     """
 
     # User Settings
-    num_user_m0 = 12 # stochastic
-    num_user_m1 = 0 # deterministic
-    num_user_m0_ONE = 0 # stochastic - ONE
-    num_user_m1_ONE = 0 # deterministic - ONE
-    total_count = num_user_m0 + num_user_m1
+    num_user = 12
 
-    max_speed = 2.5
-    lamdas = [usr_lambda,usr_lambda] # 3 mph, 10 mph, 20 mph
+    max_speed = 80
+    num_path = 30
+    num_path_orig = 1
+    mvmt_class = 0 # Dummy
+
+    spd_thresh = [1/usr_lambda - 1, 1/usr_lambda+1]
+    boundary_thresh = [boundaries[0,1],boundaries[1,1]]
 
     # Generate Server
-    users_m0 = []
-    users_m1 = []
+    users = []
     idx_counter = 0
-    
-    # Select which one users to draw from
-    usr_info = get_one_sim_usr()
-    key_list = []
-    for key in usr_info:
-        key_list += [key]
-    
-    random.shuffle(key_list)
-    
-    # Generate Stochastic users
-    mvmt_class = 0
-    num_path = 10
-    num_path_orig = 1
-    
-    for i in range(num_user_m0):
-        users_m0 += [User(boundaries, sim_param.time_steps, mvmt_class, lamdas, 
-                          max_speed, num_path)]
-        users_m0[-1].generate_MC(servers)
-        users_m0[-1].assign_id(idx_counter)
-        idx_counter += 1
-    
-    for i in range(num_user_m0_ONE):
-        usr_idx = key_list[idx_counter]
-        users_m0 += [ONE_User(boundaries, sim_param.time_steps, 
-                              max_speed, num_path, num_path_orig, 
-                              usr_info[usr_idx], mvmt_class)]
-        users_m0[-1].generate_MC(servers)
-        users_m0[-1].assign_id(idx_counter)
-        idx_counter += 1
+    infos = np.zeros([num_user, 5]) # <min x, max x, min y, max y, meanspd>
 
-        
-    # Generate Deterministic Users
-    mvmt_class = 1
-    num_path = 1
-    num_path_orig = 1
-    
-    for i in range(num_user_m1):
-        users_m1 += [User(boundaries, sim_param.time_steps, mvmt_class, lamdas, 
-                          max_speed, num_path)]
-        users_m1[-1].generate_MC(servers)
-        users_m1[-1].assign_id(idx_counter)
-        idx_counter += 1
-        
-    
-    for i in range(num_user_m1_ONE):
-        usr_idx = key_list[idx_counter]
-        users_m1 += [ONE_User(boundaries, sim_param.time_steps,
-                              max_speed, num_path, num_path_orig, 
-                              usr_info[usr_idx], mvmt_class)]
-        users_m1[-1].generate_MC(servers)
-        users_m1[-1].assign_id(idx_counter)
-        idx_counter += 1
+    for i in range(num_user):
 
-    users = users_m0 + users_m1
+        confirmed = False
+
+        # Add filtering based on mean loc and start location randomization
+        while confirmed is False:
+            db_idx = np.random.randint(len(db))
+            mvmt_array = random.choice(list(db[db_idx].values()))
+            if mvmt_array.shape[0] > sim_param.time_steps:
+                # Take mean speed here:
+                new_mvmt_array = draw_ts(mvmt_array, sim_param.time_steps)
+                mean_spd = avg_speed(new_mvmt_array)
+                xmin = min(new_mvmt_array[:,0])
+                xmax = max(new_mvmt_array[:,0])
+                ymin = min(new_mvmt_array[:,1])
+                ymax = max(new_mvmt_array[:,1])
+
+                if mean_spd >= spd_thresh[0] and mean_spd <= spd_thresh[1]:
+                    if (abs(xmax-xmin) <= boundary_thresh[0]) and (abs(ymax-ymin) <= boundary_thresh[1]):
+                        confirmed = True
+
+        # Edit initialization point of travel for more even distribution
+        # Assuming all boundaries go from 0-x, 0-y
+        xlow = -1*min(new_mvmt_array[:,0])
+        xhigh = (boundary_thresh[0] - max(new_mvmt_array[:,0]))
+        ylow = -1*min(new_mvmt_array[:,1])
+        yhigh = (boundary_thresh[1] - max(new_mvmt_array[:,1]))
+        x_offset = np.random.uniform(low= xlow, high=xhigh)
+        y_offset = np.random.uniform(low=ylow,high=yhigh)
+
+        new_mvmt_array[:,0] += x_offset
+        new_mvmt_array[:,1] += y_offset
+
+        xmin = min(new_mvmt_array[:,0])
+        xmax = max(new_mvmt_array[:,0])
+        ymin = min(new_mvmt_array[:,1])
+        ymax = max(new_mvmt_array[:,1])
+        infos[i] = np.array([xmin,xmax,ymin,ymax,mean_spd])
+
+        users += [Crawdad_User(boundaries, sim_param.time_steps, max_speed, num_path, 
+                               num_path_orig, new_mvmt_array, mean_spd, mvmt_class)]
+        users[-1].generate_MC(servers)
+        users[-1].assign_id(idx_counter)
+        idx_counter += 1
 
 
     """
