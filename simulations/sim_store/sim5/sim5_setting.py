@@ -62,14 +62,16 @@ def simulation_setting(usr_lambda,batch_ts):
     """
 
     # Server Settings
-    num_server_l1 = 4
-    num_server_l2 = 3
+    num_server_l1 = 5
+    num_server_l2 = 2
     num_server_l3 = 1
+    
+    custom_locs = [[1,1],[1,4],[4,1],[4,4], [2.5,2.5], [2.5,1], [2.5,4]]
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[30,50],[1000,1500],[4,16]])
-    strong_range = np.array([[100,300],[10000,20000],[1000,1500]])
+    weak_range = np.array([[400,600],[1000,1500],[100,100]])
+    strong_range = np.array([[600,800],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -84,28 +86,27 @@ def simulation_setting(usr_lambda,batch_ts):
     idx_counter = 0
 
     for i in range(num_server_l1):
-        servers_l1.append(Server(boundaries,level=1,rand_locs=True,locs=None))
+        servers_l1.append(Server(boundaries,level=1,rand_locs=False,locs=np.array(custom_locs[idx_counter])))
         servers_l1[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l1[-1].assign_id(idx_counter)
         servers_l1[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv1)
         idx_counter += 1
 
     for i in range(num_server_l2):
-        servers_l2.append(Server(boundaries,level=2,rand_locs=True,locs=None))
+        servers_l2.append(Server(boundaries,level=2,rand_locs=False,locs=np.array(custom_locs[idx_counter])))
         servers_l2[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l2[-1].assign_id(idx_counter)
         servers_l2[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv2)
         idx_counter += 1
 
     for i in range(num_server_l3):
-        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([200,200])))
+        servers_l3.append(Server(boundaries,level=3,rand_locs=False,locs=np.array([10,10])))
         servers_l3[-1].server_resources(num_resource, weak_range, strong_range)
         servers_l3[-1].assign_id(idx_counter)
         servers_l3[-1].server_resources_cost(num_resource,rsrc_cost*rsrc_cost_scale_lv3)
         idx_counter += 1
 
     servers = servers_l1 + servers_l2 + servers_l3
-
 
     """
     Make Links
@@ -114,13 +115,12 @@ def simulation_setting(usr_lambda,batch_ts):
     # Link Settings
     num_link = [0,1,2,3]
     prob_link = [0.5,0.2,0.2,0.1]
-    lv_minmax = np.array(([[100,200],[1000,3000],[3000,5000]]))
+    lv_minmax = np.array(([[25,40],[1000,3000],[3000,5000]]))*100
     lv1_transmission = 1
-    link_costs = np.array([0.06, 0.06, 0.06])
-    latency_settings = [250 * 1e-3, 50 * 1e-3] #[ms per switch, ms per mile]
+    link_costs = np.array([0.06, 0.06, 0.06]) * 2 # multiply cost by 2
+    latency_settings = [250/2 * 1e-3, 50/2 * 1e-3] #[ms per switch, ms per mile] - div cost by 2
 
     links = Link(servers, num_link, prob_link, lv_minmax, link_costs, latency_settings,lv1_transmission)
-
 
     """
     Make Users
