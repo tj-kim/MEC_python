@@ -1,0 +1,26 @@
+PING 192.168.1.252 (192.168.1.252) 56(84) bytes of data.
+64 bytes from 192.168.1.252: icmp_seq=1 ttl=62 time=43.1 ms
+64 bytes from 192.168.1.252: icmp_seq=2 ttl=62 time=113 ms
+64 bytes from 192.168.1.252: icmp_seq=3 ttl=62 time=72.8 ms
+64 bytes from 192.168.1.252: icmp_seq=4 ttl=62 time=110 ms
+64 bytes from 192.168.1.252: icmp_seq=5 ttl=62 time=69.6 ms
+64 bytes from 192.168.1.252: icmp_seq=6 ttl=62 time=108 ms
+64 bytes from 192.168.1.252: icmp_seq=7 ttl=62 time=64.9 ms
+64 bytes from 192.168.1.252: icmp_seq=8 ttl=62 time=104 ms
+64 bytes from 192.168.1.252: icmp_seq=9 ttl=62 time=62.5 ms
+64 bytes from 192.168.1.252: icmp_seq=10 ttl=62 time=47.4 ms
+64 bytes from 192.168.1.252: icmp_seq=11 ttl=62 time=60.1 ms
+64 bytes from 192.168.1.252: icmp_seq=12 ttl=62 time=45.1 ms
+64 bytes from 192.168.1.252: icmp_seq=13 ttl=62 time=54.2 ms
+64 bytes from 192.168.1.252: icmp_seq=14 ttl=62 time=95.9 ms
+64 bytes from 192.168.1.252: icmp_seq=15 ttl=62 time=52.9 ms
+64 bytes from 192.168.1.252: icmp_seq=16 ttl=62 time=91.6 ms
+64 bytes from 192.168.1.252: icmp_seq=17 ttl=62 time=58.2 ms
+64 bytes from 192.168.1.252: icmp_seq=18 ttl=62 time=90.2 ms
+64 bytes from 192.168.1.252: icmp_seq=19 ttl=62 time=53.6 ms
+64 bytes from 192.168.1.252: icmp_seq=20 ttl=62 time=52.9 ms
+64 bytes from 192.168.1.252: icmp_seq=21 ttl=62 time=50.3 ms
+
+--- 192.168.1.252 ping statistics ---
+21 packets transmitted, 21 received, 0% packet loss, time 20030ms
+rtt min/avg/max/mdev = 43.125/71.551/113.342/23.227 ms
