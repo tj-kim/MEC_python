@@ -277,7 +277,7 @@ class Optim_PlanGenerator(PlanGenerator):
         for (s,t) in place_list:
             temp = []
             for i in range(num_rsrc):
-                temp+= [0]
+                temp += [0]
             for j in range(len(self.jobs)):
                 for i in range(num_rsrc):
                     temp[i] += (self.q_vars[(j,s,t)] + self.g_vars[(j,s,t)])*self.jobs[j].placement_rsrc[i]
