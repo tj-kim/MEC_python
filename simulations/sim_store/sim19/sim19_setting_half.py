@@ -10,7 +10,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting():    
+def simulation_setting(db):    
     """
     Make Simulation Parameters
     """
@@ -73,7 +73,7 @@ def simulation_setting():
     strong_range = np.array([[14,20],[10000,20000],[1000,1500]])
 
 #     rsrc_cost = np.array([0.02, 0.01, 0.02])
-    rsrc_cost = np.array([0.02, 0.01, 0.02])/3
+    rsrc_cost = np.array([0.02, 0.01, 0.02]) * 1
 
     rsrc_cost_scale_lv1 = 1.1
     rsrc_cost_scale_lv2 = 1
@@ -238,6 +238,9 @@ def simulation_setting():
         idx_counter += 1
 
     jobs = jobs0 + jobs1 + jobs2
+    
+    for j in jobs:
+        j.latency_penalty *= 3 
 
     """
     Mix Jobs and Users

@@ -57,7 +57,7 @@ class Cloud_PlanGenerator(SeqGreedy_PlanGenerator):
             node_s, node_t = self.convert_node2st[j][node]
             t_list += [node_t]
             
-            print("Struck Placement Resource (j,s,t):", j, node_s, node_t)
+#             print("Struck Placement Resource (j,s,t):", j, node_s, node_t)
             
             self.valid_links[j][node,:] = 0
             self.valid_links[j][:,node] = 0
@@ -70,7 +70,7 @@ class Cloud_PlanGenerator(SeqGreedy_PlanGenerator):
             t_list += [t_end] 
             if self.valid_links[j][start_node,end_node] == 1:
                 self.all_costs[j][(start_node,end_node,path_idx)] = 0
-                print("Struck Link Resource (j,s1,s2,t,p):", j, s_start,s_end,t_end,path_idx)
+#                 print("Struck Link Resource (j,s1,s2,t,p):", j, s_start,s_end,t_end,path_idx)
                 
         t_list.sort()
         # Eliminate all nodes that are not part of cloud
@@ -78,7 +78,7 @@ class Cloud_PlanGenerator(SeqGreedy_PlanGenerator):
         for s,t in itertools.product(range(num_no_cloud_svr), t_list):
             if t >= 0 and t < self.sim_params.time_steps:
                 node = self.convert_st2node[j][(s,t)]
-                print("ban_node:", node)
+#                 print("ban_node:", node)
                 self.valid_links[j][node,:] = 0
                 self.valid_links[j][:,node] = 0
         

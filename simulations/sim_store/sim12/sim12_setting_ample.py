@@ -66,14 +66,14 @@ def simulation_setting_ample(db):
     """
 
     # Server Settings
-    num_server_l1 = 8
-    num_server_l2 = 1
+    num_server_l1 = 6
+    num_server_l2 = 3
     num_server_l3 = 1
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[60,80],[10000,15000],[1000,1000]])
-    strong_range = np.array([[100,150],[100000,200000],[10000,15000]])
+    weak_range = np.array([[600,800],[10000,15000],[1000,1000]])
+    strong_range = np.array([[1000,1500],[100000,200000],[10000,15000]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -135,7 +135,7 @@ def simulation_setting_ample(db):
     """
 
     # User Settings
-    num_user = 20
+    num_user = 40
 
     max_speed = 80
     num_path = 5
@@ -202,9 +202,9 @@ def simulation_setting_ample(db):
     """
 
     # Job settings
-    job_type0 = 7 # VR
-    job_type1 = 7 # Assistant
-    job_type2 = 6 # AR
+    job_type0 = 14 # VR
+    job_type1 = 14 # Assistant
+    job_type2 = 12 # AR
 
     jobs0 = []
     jobs1 = []

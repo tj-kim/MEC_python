@@ -10,7 +10,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting():    
+def simulation_setting(db):    
     """
     Make Simulation Parameters
     """

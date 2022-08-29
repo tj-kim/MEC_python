@@ -639,7 +639,7 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         for node in node_bans:
             node_s, node_t = self.convert_node2st[j][node]
             
-            print("Struck Placement Resource (j,s,t):", j, node_s, node_t)
+#             print("Struck Placement Resource (j,s,t):", j, node_s, node_t)
             
             self.valid_links[j][node,:] = 0
             self.valid_links[j][:,node] = 0
@@ -647,5 +647,5 @@ class SeqGreedy_PlanGenerator(PlanGenerator):
         # Eliminate All links - replace specific edge weights with zero
         for (start_node,end_node,path_idx) in path_bans:
             if self.valid_links[j][start_node,end_node] == 1:
-                print("Struck Link Resource (j,s1,s2,t,p):", j, s_start,s_end,t_end,path_idx)
+#                 print("Struck Link Resource (j,s1,s2,t,p):", j, s_start,s_end,t_end,path_idx)
                 self.all_costs[j][(start_node,end_node,path_idx)] = 0

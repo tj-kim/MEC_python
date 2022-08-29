@@ -31,7 +31,8 @@ def simulation_setting(db):
     job_profile1 = Job_Profile(job_name = "VR",
                                latency_req_range=[25/1000*0, 40/1000*0], 
                                thruput_req_range=[100/1000, 400/1000], 
-                               length_range=[8,10],  
+#                                length_range=[8,10], 
+                               length_range = [sim_param.time_steps,sim_param.time_steps],
                                placement_rsrc_range = np.array([[2,3],[8,16],[2,5]]),
                                migration_amt_range = [2, 3],
                                latency_penalty_range = [0.8*1.5,1.2*1.5],
@@ -40,7 +41,8 @@ def simulation_setting(db):
     job_profile2 = Job_Profile(job_name = "Assistant",
                                latency_req_range=[100/1000 * 0 , 200/1000 * 0 ],
                                thruput_req_range=[50/1000, 100/1000],
-                               length_range=[6,9],
+                               length_range = [sim_param.time_steps,sim_param.time_steps],
+#                                length_range=[6,9],
                                placement_rsrc_range = np.array([[1,1],[0.5,1],[0.5,1]]),
                                migration_amt_range = [1, 2],
                                latency_penalty_range = [0.5*1.5, 0.8*1.5],
@@ -49,7 +51,8 @@ def simulation_setting(db):
     job_profile3 = Job_Profile(job_name = "AR",
                                latency_req_range=[50/1000 * 0 , 80/1000 * 0 ], 
                                thruput_req_range=[90/1000, 300/1000],
-                               length_range=[7,9],
+                               length_range = [sim_param.time_steps,sim_param.time_steps],
+#                                length_range=[7,9],
                                placement_rsrc_range = np.array([[1,2],[2,4],[1,2]]),
                                migration_amt_range = [1.5, 2.5],
                                latency_penalty_range = [0.6*1.5, 1*1.5],
@@ -72,8 +75,14 @@ def simulation_setting(db):
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[4,6],[1000,1500],[100,100]])
-    strong_range = np.array([[10,15],[10000,20000],[1000,1500]])
+#     weak_range = np.array([[4,6],[1000,1500],[100,100]])
+#     strong_range = np.array([[10,15],[10000,20000],[1000,1500]])
+    m = 2.0
+    weak_range = np.array([[3*m,5*m],[1000,1500],[100,100]]) 
+    strong_range = np.array([[8*m,12*m],[10000,20000],[1000,1500]])
+    
+#     weak_range = np.array([[13,13],[1000,1500],[100,100]])
+#     strong_range = np.array([[18,18],[10000,20000],[1000,1500]])
 
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
@@ -135,7 +144,7 @@ def simulation_setting(db):
     """
 
     # User Settings
-    num_user = 20
+    num_user = 40
 
     max_speed = 80
     num_path = 5
@@ -202,9 +211,9 @@ def simulation_setting(db):
     """
 
     # Job settings
-    job_type0 = 7 # VR
-    job_type1 = 7 # Assistant
-    job_type2 = 6 # AR
+    job_type0 = 14 # VR
+    job_type1 = 14 # Assistant
+    job_type2 = 12 # AR
 
     jobs0 = []
     jobs1 = []

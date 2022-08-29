@@ -10,7 +10,7 @@ import os, sys
 import numpy as np
 import random
 
-def simulation_setting(num_users_vec):    
+def simulation_setting(num_users_vec, db):    
     """
     Make Simulation Parameters
     """
@@ -28,7 +28,8 @@ def simulation_setting(num_users_vec):
     job_profile1 = Job_Profile(job_name = "VR",
                                latency_req_range=[25/1000*0, 40/1000*0], 
                                thruput_req_range=[100/1000, 400/1000], 
-                               length_range=[8,10],  
+#                                length_range=[8,10],
+                               length_range = [sim_param.time_steps, sim_param.time_steps],
                                placement_rsrc_range = np.array([[2,3],[8,16],[2,5]]),
                                migration_amt_range = [2, 3],
                                latency_penalty_range = [0.8*1.5,1.2*1.5],
@@ -37,7 +38,8 @@ def simulation_setting(num_users_vec):
     job_profile2 = Job_Profile(job_name = "Assistant",
                                latency_req_range=[100/1000 * 0 , 200/1000 * 0 ],
                                thruput_req_range=[50/1000, 100/1000],
-                               length_range=[6,9],
+#                                length_range=[6,9],
+                               length_range = [sim_param.time_steps, sim_param.time_steps],
                                placement_rsrc_range = np.array([[1,1],[0.5,1],[0.5,1]]),
                                migration_amt_range = [1, 2],
                                latency_penalty_range = [0.5*1.5, 0.8*1.5],
@@ -46,7 +48,8 @@ def simulation_setting(num_users_vec):
     job_profile3 = Job_Profile(job_name = "AR",
                                latency_req_range=[50/1000 * 0 , 80/1000 * 0 ], 
                                thruput_req_range=[90/1000, 300/1000],
-                               length_range=[7,9],
+#                                length_range=[7,9],
+                               length_range = [sim_param.time_steps, sim_param.time_steps],
                                placement_rsrc_range = np.array([[1,2],[2,4],[1,2]]),
                                migration_amt_range = [1.5, 2.5],
                                latency_penalty_range = [0.6*1.5, 1*1.5],
@@ -69,10 +72,11 @@ def simulation_setting(num_users_vec):
 
     num_resource = 3
     # (cores, storage GB, ram)
-    weak_range = np.array([[6,8],[1000,1500],[100,100]])
-    strong_range = np.array([[14,20],[10000,20000],[1000,1500]])
+#     weak_range = np.array([[6,6],[1000,1500],[100,100]])
+#     strong_range = np.array([[16,16],[10000,20000],[1000,1500]])
+    weak_range = np.array([[14,14],[1000,1500],[100,100]])
+    strong_range = np.array([[20,20],[10000,20000],[1000,1500]])
 
-#     rsrc_cost = np.array([0.02, 0.01, 0.02])
     rsrc_cost = np.array([0.02, 0.01, 0.02])
 
     rsrc_cost_scale_lv1 = 1.1
@@ -163,13 +167,76 @@ def simulation_setting(num_users_vec):
         users_m0[-1].assign_id(idx_counter)
         idx_counter += 1
     
-    for i in range(num_user_m0_ONE):
-        usr_idx = key_list[idx_counter]
-        users_m0 += [ONE_User(boundaries, sim_param.time_steps, 
-                              max_speed, num_path, num_path_orig, 
-                              usr_info[usr_idx], mvmt_class)]
-        users_m0[-1].generate_MC(servers)
-        users_m0[-1].assign_id(idx_counter)
+#     for i in range(num_user_m0_ONE):
+#         usr_idx = key_list[idx_counter]
+#         users_m0 += [ONE_User(boundaries, sim_param.time_steps, 
+#                               max_speed, num_path, num_path_orig, 
+#                               usr_info[usr_idx], mvmt_class)]
+#         users_m0[-1].generate_MC(servers)
+#         users_m0[-1].assign_id(idx_counter)
+#         idx_counter += 1
+        
+    #######################################
+    # Loading Crawdad user instead of one #
+    #######################################
+    num_user = num_user_m0_ONE
+
+    max_speed = 80
+    num_path = 5
+    num_path_orig = 2
+    mvmt_class = 0 # Dummy
+
+    spd_thresh = [0.2, 3]
+    boundary_thresh = [boundaries[0,1],boundaries[1,1]]
+
+    # Generate Server
+    users_cd = []
+#     idx_counter = 0
+    infos = np.zeros([num_user, 5]) # <min x, max x, min y, max y, meanspd>
+
+    for i in range(num_user):
+
+        confirmed = False
+
+        # Add filtering based on mean loc and start location randomization
+        while confirmed is False:
+            db_idx = np.random.randint(len(db))
+            mvmt_array = random.choice(list(db[db_idx].values()))
+            if mvmt_array.shape[0] > sim_param.time_steps:
+                # Take mean speed here:
+                new_mvmt_array = draw_ts(mvmt_array, sim_param.time_steps)
+                mean_spd = avg_speed(new_mvmt_array)
+                xmin = min(new_mvmt_array[:,0])
+                xmax = max(new_mvmt_array[:,0])
+                ymin = min(new_mvmt_array[:,1])
+                ymax = max(new_mvmt_array[:,1])
+
+                if mean_spd >= spd_thresh[0] and mean_spd <= spd_thresh[1]:
+                    if (abs(xmax-xmin) <= boundary_thresh[0]) and (abs(ymax-ymin) <= boundary_thresh[1]):
+                        confirmed = True
+
+        # Edit initialization point of travel for more even distribution
+        # Assuming all boundaries go from 0-x, 0-y
+        xlow = -1*min(new_mvmt_array[:,0])
+        xhigh = (boundary_thresh[0] - max(new_mvmt_array[:,0]))
+        ylow = -1*min(new_mvmt_array[:,1])
+        yhigh = (boundary_thresh[1] - max(new_mvmt_array[:,1]))
+        x_offset = np.random.uniform(low= xlow, high=xhigh)
+        y_offset = np.random.uniform(low=ylow,high=yhigh)
+
+        new_mvmt_array[:,0] += x_offset
+        new_mvmt_array[:,1] += y_offset
+
+        xmin = min(new_mvmt_array[:,0])
+        xmax = max(new_mvmt_array[:,0])
+        ymin = min(new_mvmt_array[:,1])
+        ymax = max(new_mvmt_array[:,1])
+        infos[i] = np.array([xmin,xmax,ymin,ymax,mean_spd])
+
+        users_cd += [Crawdad_User(boundaries, sim_param.time_steps, max_speed, num_path, 
+                               num_path_orig, new_mvmt_array, mean_spd, mvmt_class)]
+        users_cd[-1].generate_MC(servers)
+        users_cd[-1].assign_id(idx_counter)
         idx_counter += 1
 
         
@@ -195,7 +262,7 @@ def simulation_setting(num_users_vec):
         users_m1[-1].assign_id(idx_counter)
         idx_counter += 1
 
-    users = users_m0 + users_m1
+    users = users_m0 + users_cd +  users_m1
 
 
     """
