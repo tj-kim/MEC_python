@@ -1,8 +1,8 @@
 # MoDEMS: Optimizing Edge Computing Migrations for User Mobility
 
-Official implementation of:
-MoDEMS: Optimizing Edge Computing Migrations for User Mobility
-IEEE Journal on Selected Areas in Communication (2023): https://research.ece.cmu.edu/lions/Papers/MoDEMS_JSAC.pdf
+Official implementation of:\n
+MoDEMS: Optimizing Edge Computing Migrations for User Mobility\n
+IEEE Journal on Selected Areas in Communication (2023): https://research.ece.cmu.edu/lions/Papers/MoDEMS_JSAC.pdf\n
 IEEE INFOCOM (2022): https://ieeexplore.ieee.org/abstract/document/9796680
 
 ### Guide of Repo:
