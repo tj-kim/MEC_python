@@ -10,3 +10,5 @@ IEEE INFOCOM (2022): https://ieeexplore.ieee.org/abstract/document/9796680
 - solvers - Has .py files that build a migration graph object for users, and solve these graphs for migration patterns using different algorithms
 - simulations - Has .ipynb files to run experiments similar to 'IEEE Journal on Selected Areas in Communication (2023)' version of paper
 - crawdad_mobility - Used to extract information from crawdad-yonsei-lifemap mobility dataset for traces on user movement to use for experiments
+
+Main package used is 'pulp' in order to perform centralized solution optimization.
